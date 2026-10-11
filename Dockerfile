@@ -1,0 +1,34 @@
+# ARK: Survival Evolved dedicated server image for Flux.
+#
+# Written from scratch. The game's Linux server (Steam app 376030, ~23 GB), installed and updated
+# with SteamCMD on every start, under a supervisor that writes GameUserSettings.ini and Game.ini
+# from the environment and the hub's panel, downloads and unpacks Workshop mods (no arkmanager,
+# no Perl), keeps the RCON private, saves before every stop, follows game and mod updates with
+# in-game warnings, keeps backups, and gives the hub JSON status and RCON. See README.md.
+FROM steamcmd/steamcmd:ubuntu-24
+
+ARG DEBIAN_FRONTEND=noninteractive
+ARG FLUX_IMAGE_VERSION=dev
+
+RUN apt-get update -y && \
+    apt-get install -y --no-install-recommends ca-certificates curl procps tzdata python3 && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+COPY scripts/flux-lib.sh scripts/flux-entrypoint.sh scripts/fluxase.py /opt/flux/
+RUN chmod 0755 /opt/flux/*.sh /opt/flux/fluxase.py && ln -s /opt/flux/fluxase.py /usr/local/bin/flux-ase
+
+RUN steamcmd +quit >/dev/null 2>&1; test -d /root/.local/share/Steam
+
+ENV FLUX_IMAGE_VERSION=${FLUX_IMAGE_VERSION}
+
+VOLUME ["/mnt/ase/server", "/mnt/ase/data"]
+
+# The game port and the one after it (UDP), and the Steam query port. RCON (27020/tcp) is NOT
+# exposed: the hub reaches it from inside.
+EXPOSE 7777/udp 7778/udp 27015/udp
+
+HEALTHCHECK --interval=60s --timeout=10s --start-period=60m --retries=3 \
+    CMD pgrep -f "ShooterGameServer " >/dev/null || exit 1
+
+ENTRYPOINT []
+CMD ["/opt/flux/flux-entrypoint.sh"]
