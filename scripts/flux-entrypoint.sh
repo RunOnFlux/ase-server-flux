@@ -1,18 +1,23 @@
 #!/bin/bash
 # PID 1, and the supervisor of the ARK: Survival Evolved server.
 #
-#   - every start: SteamCMD update, ShooterGame/Saved linked to the data volume, the Workshop mods
-#     downloaded and unpacked (fluxase.py sync-mods), a backup, GameUserSettings.ini and Game.ini
-#     from the environment and the panel (fluxase.py apply), then the server
+#   - every start: SteamCMD update, ShooterGame/Saved linked to the data volume, a restore the panel
+#     asked for (after a safety backup), the Workshop mods downloaded and unpacked (fluxase.py
+#     sync-mods), a backup (unless one was made in the last FLUX_BACKUP_MIN_AGE_MINUTES), the ini
+#     files from the environment and the panel (fluxase.py apply: also each map's own save folder
+#     and the pruning of ARK's dated world copies), then the server
 #   - SIGTERM/SIGINT from Docker: `SaveWorld` over RCON (0.6 s on a fresh world), then SIGINT. ARK
 #     saves again on the signal, then hangs about a minute and dies with signal 11 (measured, every
 #     time): the world is on disk long before Docker's 10 seconds, and a stop that does not end
 #     within FLUX_STOP_GRACE is killed
 #   - a new build on Steam or an updated mod: players warned in chat over RCON for
-#     FLUX_WARN_MINUTES, then a restart onto it; ASE_RESTART_TIME = a daily one
+#     FLUX_WARN_MINUTES, then a restart onto it; ASE_RESTART_TIME = a daily one. A build or mod
+#     that failed to download is not tried again for 6 hours (no restart loop while Steam fails)
 #   - the server ending on its own: a new generation in place; FLUX_RESTART_MAX_ATTEMPTS
 #     unplanned ones inside FLUX_RESTART_WINDOW end the container with 42
-#   - a backup of the saves on every start and every FLUX_BACKUP_HOURS, after a SaveWorld
+#   - backups every FLUX_BACKUP_HOURS (after a SaveWorld) and on a start; the newest
+#     FLUX_BACKUP_KEEP kept, plus always the newest older than a day and the newest older than a
+#     week, so a crash loop cannot rotate every good backup away
 #
 # THE RCON IS NOT PUBLISHED: the hub reaches it with an exec, on 127.0.0.1.
 
@@ -27,7 +32,8 @@ FLUX_RESTART_BACKOFF="${FLUX_RESTART_BACKOFF:-10}"
 # wait for.
 FLUX_STOP_GRACE="${FLUX_STOP_GRACE:-20}"
 FLUX_BACKUP_HOURS="${FLUX_BACKUP_HOURS:-6}"
-FLUX_BACKUP_KEEP="${FLUX_BACKUP_KEEP:-5}"
+FLUX_BACKUP_KEEP="${FLUX_BACKUP_KEEP:-10}"
+FLUX_BACKUP_MIN_AGE_MINUTES="${FLUX_BACKUP_MIN_AGE_MINUTES:-60}"
 FLUX_UPDATE_CHECK_MINUTES="${FLUX_UPDATE_CHECK_MINUTES:-30}"
 FLUX_WARN_MINUTES="${FLUX_WARN_MINUTES:-5}"
 
@@ -38,6 +44,9 @@ rcon() { python3 /opt/flux/fluxase.py rcon "$@" >/dev/null 2>&1; }
 
 rm -f "${FLUX_RESTART_MARKER}"
 mkdir -p "${s}" "${d}/Saved" "${FLUX_STATE_DIR}"
+# The state on the volume is the last container's: a "running" left from before must not read as
+# this one being up.
+ase state starting "Preparing the server"
 
 for var in ASE_PORT:7777 ASE_QUERY_PORT:27015; do
   name="${var%%:*}"
@@ -60,23 +69,30 @@ terminating=0
 generation=0
 restart_history=()
 
+# SaveWorld over RCON, then SIGINT. Returns 0 when ARK answered "World Saved".
 stop_server() {
-  local pid
+  local pid saved=1
   pid="$(flux_game_pid)"
   pid="${pid:-${game_pid}}"
-  [ -n "${pid}" ] || return 0
-  rcon SaveWorld
+  [ -n "${pid}" ] || return 1
+  if python3 /opt/flux/fluxase.py rcon SaveWorld 2>/dev/null | grep -q 'World Saved'; then
+    saved=0
+  fi
   kill -INT "${pid}" 2>/dev/null
+  return "${saved}"
 }
 
 # shellcheck disable=SC2329  # invoked by the trap below
 term_handler() {
   terminating=1
   flux_log "stop requested: saving the world and shutting down, no restart will follow"
-  stop_server
   # Docker usually kills the container during ARK's post-save hang, before the loop below can
-  # say "stopped": say it now, the world is on disk.
-  ase state stopped "Saved and stopped"
+  # say "stopped": say it now, and say whether the save was confirmed (ARK also saves on SIGINT).
+  if stop_server; then
+    ase state stopped "Saved and stopped"
+  else
+    ase state stopped "Stopped (the save was not confirmed over RCON; ARK saves on the signal too)"
+  fi
 }
 trap term_handler TERM INT
 
@@ -93,13 +109,13 @@ update_server() {
     # shellcheck disable=SC2086  # validate is "" or "validate"
     # app_info_update + a second app_update: SteamCMD answers "Missing configuration" to a first
     # app_update now and then (measured with this app and the ATS server).
-    if steamcmd +force_install_dir "${s}" +login anonymous +app_info_update 1 +app_update "${FLUX_STEAM_APP}" +app_update "${FLUX_STEAM_APP}" ${validate} +quit; then
+    if steamcmd +force_install_dir "${s}" +login anonymous +app_info_update 1 +app_update "${FLUX_STEAM_APP}" +app_update "${FLUX_STEAM_APP}" ${validate} +quit >/tmp/steamcmd.log 2>&1; then
       flux_log "server build $(flux_installed_build "${s}/steamapps/appmanifest_${FLUX_STEAM_APP}.acf")"
       return 0
     fi
     [ "${terminating}" = "1" ] && return 1
     validate="validate"
-    flux_log "WARN steamcmd failed (attempt ${attempt}/5); retrying in 5s with validate"
+    flux_log "WARN steamcmd failed (attempt ${attempt}/5): $(grep -aE 'ERROR|Error|error' /tmp/steamcmd.log | tail -1 | tr -d '\r')); retrying in 5s with validate"
     sleep 5
   done
   if [ -x "${s}/${FLUX_GAME_BINARY}" ]; then
@@ -123,22 +139,34 @@ link_saved() {
   ln -s "${d}/Saved" "${saved}"
 }
 
+# $1 = why. A "start" backup is skipped when the newest is younger than
+# FLUX_BACKUP_MIN_AGE_MINUTES (a crash loop or a run of panel restarts would otherwise fill the
+# rotation with copies of the same, possibly broken, saves).
 backup_saves() {
-  local why="$1" out name
+  local why="$1" out name rc
   [ "${FLUX_BACKUP_KEEP}" -gt 0 ] 2>/dev/null || return 0
   [ -d "${d}/Saved/SavedArks" ] || return 0
+  if [ "${why}" = "start" ] && ! ase backup-due "${FLUX_BACKUP_MIN_AGE_MINUTES}"; then
+    return 0
+  fi
   mkdir -p "${FLUX_BACKUP_DIR}"
-  name="$(date -u +%Y%m%d-%H%M%S)-ark.tar.gz"
+  name="$(date -u +%Y%m%d-%H%M%S)-ark$([ "${why}" = "pre-restore" ] && echo "-pre-restore").tar.gz"
   out="${FLUX_BACKUP_DIR}/${name}"
-  # The world, players and tribes, and the config; not the game's own .bak copies or logs.
-  if tar -C "${d}" --exclude='*.bak' --exclude='Saved/Logs' --exclude='*.tmp' -czf "${out}.part" Saved 2>/dev/null \
-    && mv "${out}.part" "${out}"; then
+  # Every map's world, players and tribes, and the config; not ARK's .bak and dated copies (each a
+  # whole world, kept by the game itself), its logs or temp files.
+  tar -C "${d}" --exclude='*.bak' --exclude='Saved/Logs' --exclude='*.tmp' --exclude='Saved/SavedArks/.flux-premigration' \
+    --exclude='*_[0-9][0-9].[0-9][0-9].[0-9][0-9][0-9][0-9]_[0-9][0-9].[0-9][0-9].[0-9][0-9].ark' \
+    -czf "${out}.part" Saved 2>/dev/null
+  rc=$?
+  # 1 = "file changed as we read it": ARK wrote a file while tar read it. The archive is still
+  # whole (the files are read after a SaveWorld); kept when gzip says it is complete.
+  if { [ "${rc}" = 0 ] || { [ "${rc}" = 1 ] && gzip -t "${out}.part" 2>/dev/null; }; } && mv "${out}.part" "${out}"; then
     flux_log "backup (${why}): flux/backups/${name}, $(du -h "${out}" | cut -f1)"
   else
     rm -f "${out}.part"
-    flux_log "WARN backup (${why}) failed"
+    flux_log "WARN backup (${why}) failed (tar exit ${rc})"
   fi
-  flux_prune "${FLUX_BACKUP_DIR}" "*-ark.tar.gz" "${FLUX_BACKUP_KEEP}"
+  while IFS= read -r line; do flux_log "backups: ${line#\# }"; done < <(ase backups-prune "${FLUX_BACKUP_KEEP}" 2>&1)
 }
 
 # shellcheck disable=SC2329  # run in the background below
@@ -168,19 +196,9 @@ restart_with_warning() {
   stop_server
 }
 
-# Mods updated on the Workshop since they were unpacked, by their Workshop time.
+# Mods with a newer version on the Workshop than the one unpacked (and not failing to download).
 mods_outdated() {
-  python3 - <<'PY' 2>/dev/null
-import json, os, sys
-sys.path.insert(0, "/opt/flux")
-import fluxase as a
-state = a.read_json(a.MODS_STATE, {}) or {}
-ids = [m["id"] for m in state.get("mods", []) if m.get("installed")]
-for i, d in a.mod_titles(ids).items():
-    known = next((m for m in state["mods"] if m["id"] == i), {})
-    if int(d.get("time_updated") or 0) > int(known.get("updated") or 0):
-        print(i, d.get("title", ""))
-PY
+  ase mods-outdated 2>/dev/null
 }
 
 # shellcheck disable=SC2329  # run in the background below
@@ -204,7 +222,7 @@ watcher() {
       last_check="${now}"
       build="$(flux_installed_build "${s}/steamapps/appmanifest_${FLUX_STEAM_APP}.acf")"
       public="$(steamcmd +login anonymous +app_info_update 1 +app_info_print "${FLUX_STEAM_APP}" +quit 2>/dev/null | flux_public_build public)"
-      if [ -n "${public}" ] && [ -n "${build}" ] && [ "${public}" != "${build}" ]; then
+      if [ -n "${public}" ] && [ -n "${build}" ] && [ "${public}" != "${build}" ] && ase update-due "${build}" "${public}"; then
         restart_with_warning "planned: game update ${build} -> ${public}" "a game update"
         exit 0
       fi
@@ -222,13 +240,19 @@ watcher() {
 }
 
 start_generation() {
-  local line url="" args=()
+  local line url="" args=() extra=()
   generation=$((generation + 1))
   rm -f "${FLUX_RESTART_MARKER}"
 
   update_server || return 1
+  while IFS= read -r line; do flux_log "update: ${line#\# }"; done < <(ase update-done 2>&1)
   [ "${terminating}" = "1" ] && return 2
   link_saved
+  if [ -f "${FLUX_STATE_DIR}/restore-pending" ]; then
+    ase state updating "Restoring a backup"
+    backup_saves "pre-restore"
+    while IFS= read -r line; do flux_log "restore: ${line#\# }"; done < <(ase restore-apply 2>&1)
+  fi
   ase state updating "Downloading and unpacking the mods"
   while IFS= read -r line; do
     flux_log "mods: ${line#\# }"
@@ -238,6 +262,7 @@ start_generation() {
   while IFS= read -r line; do
     case "${line}" in
       "# "*) flux_log "config: ${line#\# }" ;;
+      "ARG "*) extra+=("${line#ARG }") ;;
       *\?listen\?*) url="${line}" ;;
     esac
   done < <(ase apply 2>&1)
@@ -250,7 +275,9 @@ start_generation() {
     args+=(-NoBattlEye)
   fi
   if flux_truthy "${ASE_CROSSPLAY:-false}"; then
-    # Epic players: the server has to tell Epic its public address.
+    # Epic players: the server has to tell Epic its public address. Measured on the Linux server:
+    # with -crossplay it connects to Epic's services (api.epicgames.dev); without it, it does not.
+    # An Epic client joining has not been tested.
     local ip
     ip="$(curl -fsS --max-time 10 https://api.ipify.org 2>/dev/null)"
     if [[ "${ip}" =~ ^[0-9.]+$ ]]; then
@@ -260,11 +287,14 @@ start_generation() {
       flux_log "WARN crossplay asked for, but the public address could not be found; off"
     fi
   fi
-  [ -n "${ASE_CLUSTER_ID:-}" ] && [[ "${ASE_CLUSTER_ID}" =~ ^[A-Za-z0-9_-]{1,64}$ ]] && args+=("-clusterid=${ASE_CLUSTER_ID}" "-ClusterDirOverride=${d}/cluster")
+  # -MapModID for a Workshop map, and the cluster flags for transfers between this server's maps
+  # (fluxase.py apply decides both; a cluster shared between two Flux apps is not possible, their
+  # volumes are separate).
+  args+=("${extra[@]}")
   [ "${terminating}" = "1" ] && return 2
 
   ase state starting "Loading the map (about a minute)"
-  flux_log "starting the server (generation ${generation}): ${url} ${args[*]}"
+  flux_log "starting the server (generation ${generation}): $(ase mask "${url}") ${args[*]}"
   (
     cd "${s}/ShooterGame/Binaries/Linux" || exit 1
     exec ./ShooterGameServer "${url}" "${args[@]}"

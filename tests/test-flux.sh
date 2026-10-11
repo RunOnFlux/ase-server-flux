@@ -35,7 +35,9 @@ game="${data}/Saved/Config/LinuxServer/Game.ini"
 iniv() { python3 -c 'import sys; sys.path.insert(0,"scripts"); import fluxase as a; print(a.ini_get(open(sys.argv[1]).read(), sys.argv[2], sys.argv[3]))' "$@"; }
 
 url="$(ase ASE_SESSION_NAME="My Ark" ASE_MAX_PLAYERS=20 ASE_XP=2 ASE_PVE=true ASE_MAP=Ragnarok apply | tail -1)"
-check "the launch URL" "Ragnarok?listen?SessionName=My Ark?Port=7777?QueryPort=27015?MaxPlayers=20?RCONEnabled=True?RCONPort=27020?ServerAdminPassword=$(ase admin-password)" "${url}"
+check "the launch URL" "Ragnarok?listen?SessionName=My Ark?Port=7777?QueryPort=27015?MaxPlayers=20?RCONEnabled=True?RCONPort=27020?ServerAdminPassword=$(ase admin-password)?AltSaveDirectoryName=SavedArks/Ragnarok" "${url}"
+check "the URL's passwords can be masked for the log" "Ragnarok?listen?ServerAdminPassword=***?AltSaveDirectoryName=x?ServerPassword=***" "$(ase mask 'Ragnarok?listen?ServerAdminPassword=abc?AltSaveDirectoryName=x?ServerPassword=pw')"
+check "an EMPTY env value does not pin a setting" "panel" "$(ase set-settings '{"pve": true}' >/dev/null; ase ASE_PVE= settings | python3 -c 'import json,sys;print(json.load(sys.stdin)["sources"]["pve"])')"
 check "the session name in the ini" "My Ark" "$(iniv "${gus}" SessionSettings SessionName)"
 check "max players in its own section" "20" "$(iniv "${gus}" /Script/Engine.GameSession MaxPlayers)"
 check "XP" "2.000000" "$(iniv "${gus}" ServerSettings XPMultiplier)"
@@ -93,9 +95,9 @@ sys.path.insert(0, "scripts")
 import fluxase as a
 a.WORKSHOP_CONTENT = os.path.join(sys.argv[1], "ws", "steamapps", "workshop", "content", "346110")
 a.MODS_DIR = os.path.join(sys.argv[1], "Mods")
-print(a.install_mod("999", "My Mod"), a.install_mod("999", "My Mod"))
+print(a.install_mod("999", "My Mod", version=1700000000), a.install_mod("999", "My Mod", version=1700000000), os.path.isdir(os.path.join(a.WORKSHOP_CONTENT, "999")))
 PY
-check "a mod installs once, then is up to date" "True False" "$(python3 "${tmp}/inst.py" "${tmp}")"
+check "a mod installs once, then is up to date, and its download is removed" "True False False" "$(python3 "${tmp}/inst.py" "${tmp}")"
 check "its .z is unpacked" "100000" "$(wc -c <"${tmp}/Mods/999/Sub/file.uasset")"
 check "the size files are not copied" "1" "$(status test -e "${tmp}/Mods/999/Sub/file.uasset.z.uncompressed_size")"
 check "plain files are copied" "x" "$(cat "${tmp}/Mods/999/plain.txt")"
@@ -108,11 +110,61 @@ py() { PYTHONPATH=scripts python3 -c "import fluxase as t; $1"; }
 check "no players" "[]" "$(py 'print(t.parse_players("No Players Connected \n "))')"
 check "players" "Rex 76561198000000001,Bob, Jr 76561198000000002" "$(py 'print(",".join(p["name"]+" "+p["id"] for p in t.parse_players("\n0. Rex, 76561198000000001\n1. Bob, Jr, 76561198000000002\n ")))')"
 
-# Saves.
+# Saves: one folder per map, an old flat layout moved once.
 mkdir -p "${data}/Saved/SavedArks" "${data}/flux/backups"
-echo x >"${data}/Saved/SavedArks/Fjordur.ark"; echo x >"${data}/Saved/SavedArks/1.arkprofile"; echo x >"${data}/Saved/SavedArks/2.arkprofile"
-echo x >"${data}/Saved/SavedArks/9.arktribe"; echo x >"${data}/flux/backups/20261011-000000-ark.tar.gz"
-check "saves: worlds, players, tribes, backups" "Fjordur True 2 1 1" "$(ase saves | python3 -c 'import json,sys;d=json.load(sys.stdin);print(d["worlds"][0]["map"], d["worlds"][0]["active"], d["profiles"], d["tribes"], len(d["backups"]))')"
+sa="${data}/Saved/SavedArks"
+echo world >"${sa}/Fjordur.ark"; echo w2 >"${sa}/Ragnarok.ark"; echo bak >"${sa}/Fjordur_AntiCorruptionBackup.bak"
+echo x >"${sa}/1.arkprofile"; echo x >"${sa}/2.arkprofile"; echo x >"${sa}/9.arktribe"
+for i in 1 2 3 4 5 6; do echo d >"${sa}/Fjordur_0${i}.10.2026_10.00.00.ark"; touch -d "2026-10-0${i}" "${sa}/Fjordur_0${i}.10.2026_10.00.00.ark"; done
+ase set-settings '{"map": "Fjordur"}' >/dev/null
+ase apply >"${tmp}/apply"
+check "the flat layout is moved into one folder per map" "world w2" "$(cat "${sa}/Fjordur/Fjordur.ark") $(cat "${sa}/Ragnarok/Ragnarok.ark")"
+check "players and tribes are copied beside every world" "2 1 2" "$(find "${sa}/Fjordur" -name '*.arkprofile' | wc -l) $(find "${sa}/Fjordur" -name '*.arktribe' | wc -l) $(find "${sa}/Ragnarok" -name '*.arkprofile' | wc -l)"
+check "the shared originals are kept aside" "0" "$(status test -f "${sa}/.flux-premigration/1.arkprofile")"
+check "ARK's own copies move with their world" "0" "$(status test -f "${sa}/Fjordur/Fjordur_AntiCorruptionBackup.bak")"
+check "the newest 4 dated copies are kept" "4" "$(find "${sa}/Fjordur" -name 'Fjordur_??.??.2026_*.ark' | wc -l)"
+check "and the oldest go" "1" "$(status test -e "${sa}/Fjordur/Fjordur_01.10.2026_10.00.00.ark")"
+check "the migration runs once" "0" "$(grep -c 'one folder per map' <(ase apply))"
+check "the URL saves into the map's folder" "1" "$(ase apply | grep -cE 'AltSaveDirectoryName=SavedArks/Fjordur(\?|$)')"
+check "a backup is due with none yet" "0" "$(status ase backup-due 60)"
+echo x >"${data}/flux/backups/20261011-000000-ark.tar.gz"
+check "saves: per map, with its players and dated copies, and backups" "Fjordur True 2 1 4 1" "$(ase saves | python3 -c 'import json,sys;d=json.load(sys.stdin);m=[x for x in d["maps"] if x["map"]=="Fjordur"][0];print(m["map"], m["active"], m["profiles"], m["tribes"], m["dated"], len(d["backups"]))')"
+check "saves report disk use" "True" "$(ase saves | python3 -c 'import json,sys;d=json.load(sys.stdin)["disk"];print(d["saves"] > 0)')"
 
+# A Workshop map, and transfers between this server's maps.
+check "a Workshop map by link" "0" "$(status ase set-settings '{"modMap": "https://steamcommunity.com/sharedfiles/filedetails/?id=1234567"}')"
+ase apply >"${tmp}/apply"
+check "it is loaded with -MapModID and saved in its own folder" "ARG -MapModID=1234567 1" "$(grep '^ARG -MapModID' "${tmp}/apply") $(grep -c 'AltSaveDirectoryName=SavedArks/Mod_1234567' "${tmp}/apply")"
+check "and is in ActiveMods" "0" "$(status grep -q 'ActiveMods=.*1234567' "${gus}")"
+check "an official map clears it" "0" "$(ase set-settings '{"map": "Ragnarok"}' >/dev/null; ase apply | grep -c 'MapModID')"
+ase set-settings '{"mapTransfers": true}' >/dev/null
+check "map transfers add a one-server cluster" "2" "$(ase apply | grep -c '^ARG -clust\|^ARG -ClusterDir')"
+
+# Backups: the rotation never loses the last good day or week.
+check "a crash loop's backups keep the day-old and week-old ones" "b1,b2,b5,b9" "$(py 'n=["b1","b2","b3","b4","b5","b6","b7","b8","b9"]; tm={"b1":1000,"b2":990,"b3":980,"b4":970,"b5":-90000,"b6":-90010,"b7":-90020,"b8":-90030,"b9":-700000}; print(",".join(x for x in n if x not in t.backups_to_prune(n,tm,2,now=1000)))')"
+touch "${data}/flux/backups/20261011-000000-ark.tar.gz"
+check "a start backup is skipped right after another" "1" "$(status ase backup-due 60)"
+
+# Restore: checked by the command, applied by the supervisor's start.
+mkdir -p "${tmp}/bk/Saved/SavedArks/Ragnarok" && echo restored >"${tmp}/bk/Saved/SavedArks/Ragnarok/Ragnarok.ark"
+tar -C "${tmp}/bk" -czf "${data}/flux/backups/20261012-000000-ark.tar.gz" Saved
+check "a restore of a missing backup is refused" "2" "$(status ase restore 20990101-000000-ark.tar.gz)"
+check "a path is refused" "2" "$(status ase restore ../x.tar.gz)"
+check "a restore is accepted while stopped" "start" "$(ase restore 20261012-000000-ark.tar.gz | python3 -c 'import json,sys;print(json.load(sys.stdin)["appliesOn"])')"
+check "and is pending" "True" "$(ase status | python3 -c 'import json,sys;print(json.load(sys.stdin)["pending"])')"
+ase restore-apply >/dev/null
+check "the start applies it" "restored" "$(cat "${sa}/Ragnarok/Ragnarok.ark")"
+check "once" "1" "$(status test -e "${data}/flux/restore-pending")"
+
+# Updates that failed are not retried for 6 h.
+check "an update is due" "0" "$(status ase update-due 100 200)"
+ase update-done >/dev/null
+check "a target that did not install is remembered" "200" "$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["target"])' "${data}/flux/update-failed.json")"
+check "and not due again" "1" "$(status ase update-due 100 200)"
+check "a newer build is" "0" "$(status ase update-due 100 300)"
+
+# RCON replies.
+check "Epic players are listed too" "Rex steam,Eve epic" "$(py 'print(",".join(p["name"]+" "+p["platform"] for p in t.parse_players("0. Rex, 76561198000000001\n1. Eve, 0123456789abcdef0123456789abcdef\n")))')"
+check "one command per call: | is refused" "2" "$(status ase rcon 'Broadcast hi | DoExit')"
 printf '\n%d passed, %d failed\n' "${pass}" "${fail}"
 [ "${fail}" = "0" ]

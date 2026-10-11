@@ -13,7 +13,15 @@ updated with SteamCMD on every start, under a supervisor that:
 - saves before every stop: `SaveWorld` over RCON, then SIGINT. ARK then hangs about a minute and
   dies with signal 11 (measured, every time); the world is on disk by then
 - follows game updates and mod updates: warns players in chat over RCON, then restarts
-- makes a backup of the saves on every start and every 6 hours
+- keeps **each map in its own save folder** (`Saved/SavedArks/<Map>/`, ARK's `?AltSaveDirectoryName`):
+  its world, players and tribes, so characters do not travel between maps; servers from 1.0.0/1.0.1
+  are moved on their first start (the shared players and tribes copied beside every world)
+- prunes ARK's dated world copies (`<Map>_DD.MM.YYYY_HH.MM.SS.ark`, never deleted by the game) to the
+  newest `FLUX_DATED_KEEP` (4) per map
+- makes backups every 6 hours and on a start (not when the last is under an hour old); keeps the
+  newest 10 plus always the newest older than a day and older than a week; restores one on request
+  (a safety backup first)
+- does not retry a game or mod update that failed to download for 6 hours (no restart loop)
 - gives the hub JSON status and RCON (`flux-ase`)
 
 ## Volumes
@@ -46,9 +54,12 @@ RCON (27020/tcp) stays inside.
 | `ASE_MODS` | `ActiveMods` | Workshop IDs or links |
 | `ASE_ADMIN_PASSWORD` | `ServerAdminPassword` | unset: made once and kept |
 | `ASE_BATTLEYE` | | `true` = BattlEye on (default off) |
-| `ASE_CROSSPLAY` | `-crossplay -PublicIPForEpic` | Epic players; vanilla only (Epic cannot use mods) |
-| `ASE_CLUSTER_ID` | `-clusterid` | transfers between servers sharing the cluster folder |
+| `ASE_CROSSPLAY` | `-crossplay -PublicIPForEpic` | Epic players; vanilla only (Epic cannot use mods). Measured: the Linux server then connects to Epic's services; an Epic client joining is untested |
 | `ASE_RESTART_TIME` | | `HH:MM`, a daily restart with warnings |
+
+A variable that is set but EMPTY counts as unset (the marketplace writes declared parameters even
+when left blank). Panel-only settings (no variable): a Workshop map (`modMap`, `-MapModID`) and
+transfers between this server's maps (`mapTransfers`: a one-server cluster in `Saved/clusters`).
 
 ## For the hub
 
@@ -59,6 +70,8 @@ RCON (27020/tcp) stays inside.
 | `flux-ase settings` / `set-settings '<json>'` | every setting with its source; `map` too; the admin password |
 | `flux-ase mods` / `set-mods '{"mods": [...]}'` | |
 | `flux-ase saves` | the worlds on disk (one `.ark` per map: switching maps keeps each one), players, tribes, the game's `.bak` copies and our backups |
+| `flux-ase saves` | each map's folder (world, players, tribes, dated copies, ARK's .bak), disk use |
+| `flux-ase backups` / `restore <file>` | our backups; a restore is applied before the next start, after a safety backup |
 | `flux-ase restart` | |
 
 ## Measured (build 21241282, ARK 361.7)
@@ -77,6 +90,15 @@ RCON (27020/tcp) stays inside.
   `app_update` in the same run.
 
 ## Versions
+
+- **1.0.2** (2026-10-11): one save folder per map (with the migration of a flat layout); dated
+  world copies pruned and left out of backups; backups not on every start, a retention that keeps
+  a day-old and a week-old one; `flux-ase backups` / `restore`; failed game/mod updates not retried
+  for 6 h; mods downloaded only when the Workshop has a newer version, the download removed once
+  unpacked, the installed version taken from SteamCMD's record; Epic (EOS) ids in ListPlayers;
+  `|` refused in RCON commands; a Workshop map (`-MapModID`) and transfers between this server's
+  maps; passwords masked in our log; "Saved and stopped" only when ARK confirmed the save; the
+  state reset at boot; empty env values count as unset; `ASE_CLUSTER_ID` removed.
 
 - **1.0.1** (2026-10-11): `flux-ase saves` (the hub's Map tab lists the worlds and backups); the panel's map wins over `ASE_MAP`, which is the first map.
 - **1.0.0** (2026-10-11): first release.

@@ -28,4 +28,9 @@ docker run --rm -v "$PWD:/mnt" -w /mnt koalaman/shellcheck:stable -x scripts/*.s
   in a name or password would break nothing; passwords with `?` are refused anyway.
 - **Mods: WindowsNoEditor, on Linux too** (arkmanager's default; "Linux mods are known to crash").
   `install_mod` is arkmanager's doExtractMod in Python (with its multi-map offset bug fixed).
-- **No log to read**: readiness = RCON answering.
+- **No log to read**: readiness = RCON answering. ARK writes ShooterGame.log only on exit.
+- **`AltSaveDirectoryName` is a URL option** (`?AltSaveDirectoryName=SavedArks/<Map>`); as a dash
+  argument it is ignored (measured). Each map's folder holds its own players and tribes.
+- **Dated `.ark` copies are never deleted by ARK**: `prune_dated` keeps FLUX_DATED_KEEP.
+- **A restore cannot be done by an exec**: `flux-ase restore` records it and restarts; the
+  supervisor applies it before the next start (`restore-apply`), after a `pre-restore` backup.

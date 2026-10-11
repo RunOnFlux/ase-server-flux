@@ -46,9 +46,11 @@ import os, re, signal, socket, struct, sys, threading, time
 gus = open("../../Saved/Config/LinuxServer/GameUserSettings.ini").read()
 pw = re.search(r"^ServerAdminPassword=(.*)$", gus, re.M).group(1)
 the_map = sys.argv[1].split("?")[0]
+opts = dict(o.split("=", 1) for o in sys.argv[1].split("?")[1:] if "=" in o)
+folder = "../../Saved/" + opts.get("AltSaveDirectoryName", "SavedArks")
 def save():
-    os.makedirs("../../Saved/SavedArks", exist_ok=True)
-    open(f"../../Saved/SavedArks/{the_map}.ark", "a").write("saved\n")
+    os.makedirs(folder, exist_ok=True)
+    open(f"{folder}/{the_map}.ark", "a").write("saved\n")
 def on_int(*_):
     save()
     time.sleep(120)   # ARK hangs after its save
@@ -96,9 +98,20 @@ check "a panel restart saves, gives up on the hang, comes back on the new map" "
 check "not counted as a crash" "0" "$(grep -c 'restarts within' /tmp/entry.log)"
 check "a backup on the second start" "0" "$(status wait_for 'ls ${data}/flux/backups/*-ark.tar.gz' 5)"
 
+# A restore while running: the server saves, a safety backup is taken, the archive replaces the
+# saves, the server comes back.
+echo before-restore >"${data}/Saved/SavedArks/Ragnarok/marker.txt"
+backup="$(flux-ase backups | python3 -c 'import json,sys;print(json.load(sys.stdin)["backups"][-1]["file"])')"
+check "a restore is accepted while running" "True" "$(flux-ase restore "${backup}" | python3 -c 'import json,sys;print(json.load(sys.stdin)["restarting"])')"
+check "the server comes back after the restore" "0" "$(status wait_for '! test -e ${data}/flux/restore-pending && grep -q "\"running\"" ${data}/flux/state.json && grep -q "restored ${backup}" ${data}/flux/flux.log' 60)"
+check "a safety backup was taken first" "1" "$(find "${data}/flux/backups" -name '*-ark-pre-restore.tar.gz' | wc -l)"
+check "the saves are the backup's" "1" "$(status test -e "${data}/Saved/SavedArks/Ragnarok/marker.txt")"
+
 kill -TERM "${entry}"
 check "a stop ends the supervisor" "0" "$(status wait_for '! kill -0 ${entry} 2>/dev/null' 30)"
-check "with the world saved first" "0" "$(status grep -q saved "${data}/Saved/SavedArks/Ragnarok.ark")"
+check "with the world saved first, in the map's own folder" "0" "$(status grep -q saved "${data}/Saved/SavedArks/Ragnarok/Ragnarok.ark")"
+check "and says it was saved" "Saved and stopped" "$(python3 -c 'import json;print(json.load(open("'"${data}"'/flux/state.json"))["message"])')"
+check "the log never shows the admin password" "0" "$(grep -c "ServerAdminPassword=$(flux-ase admin-password)" "${data}/flux/flux.log")"
 
 printf '\n%d passed, %d failed\n' "${pass}" "${fail}"
 [ "${fail}" = "0" ] || { echo '--- entrypoint log'; cat /tmp/entry.log; exit 1; }
