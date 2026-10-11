@@ -74,6 +74,9 @@ term_handler() {
   terminating=1
   flux_log "stop requested: saving the world and shutting down, no restart will follow"
   stop_server
+  # Docker usually kills the container during ARK's post-save hang, before the loop below can
+  # say "stopped": say it now, the world is on disk.
+  ase state stopped "Saved and stopped"
 }
 trap term_handler TERM INT
 

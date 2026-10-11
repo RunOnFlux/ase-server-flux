@@ -310,10 +310,22 @@ def cmd_apply():
     from_env = [n for n, s in sources.items() if s == "env"]
     from_panel = [n for n, s in sources.items() if s == "panel"]
     print(f"# map {map_name()} ({MAPS[map_name()][0]}), mods: {','.join(mods) or '-'}; settings from env: {', '.join(from_env) or '-'}; from the panel: {', '.join(from_panel) or '-'}")
-    # The URL the launch line starts with. Only what the ini cannot hold: the map, the ports.
+    # The URL the launch line starts with: the map, the ports, and what ARK does NOT take from a
+    # GameUserSettings.ini written before its first start (measured: it rewrote the file with
+    # "ARK #546145", 70 players and no admin password, so RCON never opened). On the URL these
+    # win, and ARK writes them back into the ini itself.
     port = os.environ.get("ASE_PORT", "7777")
     query = os.environ.get("ASE_QUERY_PORT", "27015")
-    print(f"{map_name()}?listen?Port={port}?QueryPort={query}?RCONEnabled=True?RCONPort={RCON_PORT}")
+    gus_now = read_ini(GUS)
+    session = values.get("sessionName") or ini_get(gus_now, "SessionSettings", "SessionName") or "ARK on Flux"
+    players = values.get("maxPlayers") or ini_get(gus_now, SESSION, "MaxPlayers") or 70
+    password = values.get("password") if "password" in values else (ini_get(gus_now, SS, "ServerPassword") or "")
+    url = [map_name(), "listen", f"SessionName={session}", f"Port={port}", f"QueryPort={query}",
+           f"MaxPlayers={int(float(players))}", "RCONEnabled=True", f"RCONPort={RCON_PORT}",
+           f"ServerAdminPassword={admin_password()}"]
+    if password:
+        url.append(f"ServerPassword={password}")
+    print("?".join(url))
 
 
 # ------------------------------------------------------------------------------------------------

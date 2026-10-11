@@ -64,6 +64,13 @@ RCON (27020/tcp) stays inside.
 
 - 22.9 GB download; TheIsland up in 60-70 s cold, ~42 s warm; 4.8-6.5 GB RAM empty.
 - SIGTERM, SIGINT and `DoExit` all save, then hang ~60 s and die with signal 11 (exit 139).
+- **A GameUserSettings.ini written before the first start is overwritten** with ARK's defaults
+  ("ARK #546145", 70 players, no admin password, so no RCON). The session name, players and
+  passwords therefore go on the launch URL (ARK writes them back into the ini); the rest stays in
+  the ini, where later starts keep it.
+- `docker stop`: the world is saved within the first second; Docker then kills ARK in its hang.
+- A Workshop mod (Awesome SpyGlass, 1404697612) downloaded, unpacked and loaded: the server
+  started with it in ActiveMods.
 - `ShooterGame.log` stays empty and `-log` prints nothing: readiness is the RCON answering.
 - `app_update` answers "Missing configuration" now and then: `app_info_update 1` and a second
   `app_update` in the same run.

@@ -35,7 +35,7 @@ game="${data}/Saved/Config/LinuxServer/Game.ini"
 iniv() { python3 -c 'import sys; sys.path.insert(0,"scripts"); import fluxase as a; print(a.ini_get(open(sys.argv[1]).read(), sys.argv[2], sys.argv[3]))' "$@"; }
 
 url="$(ase ASE_SESSION_NAME="My Ark" ASE_MAX_PLAYERS=20 ASE_XP=2 ASE_PVE=true ASE_MAP=Ragnarok apply | tail -1)"
-check "the launch URL" "Ragnarok?listen?Port=7777?QueryPort=27015?RCONEnabled=True?RCONPort=27020" "${url}"
+check "the launch URL" "Ragnarok?listen?SessionName=My Ark?Port=7777?QueryPort=27015?MaxPlayers=20?RCONEnabled=True?RCONPort=27020?ServerAdminPassword=$(ase admin-password)" "${url}"
 check "the session name in the ini" "My Ark" "$(iniv "${gus}" SessionSettings SessionName)"
 check "max players in its own section" "20" "$(iniv "${gus}" /Script/Engine.GameSession MaxPlayers)"
 check "XP" "2.000000" "$(iniv "${gus}" ServerSettings XPMultiplier)"
