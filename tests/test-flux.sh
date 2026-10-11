@@ -56,6 +56,7 @@ ase apply >/dev/null
 check "taming" "5.000000" "$(iniv "${gus}" ServerSettings TamingSpeedMultiplier)"
 check "breeding goes to Game.ini" "10.000000" "$(iniv "${game}" /script/shootergame.shootergamemode BabyMatureSpeedMultiplier)"
 check "the panel's map" "Fjordur" "$(ase apply | tail -1 | cut -d'?' -f1)"
+check "the panel's map wins over ASE_MAP (the first map)" "Fjordur panel" "$(ase ASE_MAP=Ragnarok apply | tail -1 | cut -d'?' -f1) $(ase ASE_MAP=Ragnarok settings | python3 -c 'import json,sys;print(json.load(sys.stdin)["mapSource"])')"
 check "the join password" "pw" "$(iniv "${gus}" ServerSettings ServerPassword)"
 check "a password with ? is refused (it would break the URL)" "2" "$(status ase set-settings '{"password": "a?b"}')"
 check "out of range" "2" "$(status ase set-settings '{"xp": -1}')"
@@ -106,6 +107,12 @@ check "the .mod starts with the id" "999" "$(python3 -c 'import struct,sys;print
 py() { PYTHONPATH=scripts python3 -c "import fluxase as t; $1"; }
 check "no players" "[]" "$(py 'print(t.parse_players("No Players Connected \n "))')"
 check "players" "Rex 76561198000000001,Bob, Jr 76561198000000002" "$(py 'print(",".join(p["name"]+" "+p["id"] for p in t.parse_players("\n0. Rex, 76561198000000001\n1. Bob, Jr, 76561198000000002\n ")))')"
+
+# Saves.
+mkdir -p "${data}/Saved/SavedArks" "${data}/flux/backups"
+echo x >"${data}/Saved/SavedArks/Fjordur.ark"; echo x >"${data}/Saved/SavedArks/1.arkprofile"; echo x >"${data}/Saved/SavedArks/2.arkprofile"
+echo x >"${data}/Saved/SavedArks/9.arktribe"; echo x >"${data}/flux/backups/20261011-000000-ark.tar.gz"
+check "saves: worlds, players, tribes, backups" "Fjordur True 2 1 1" "$(ase saves | python3 -c 'import json,sys;d=json.load(sys.stdin);print(d["worlds"][0]["map"], d["worlds"][0]["active"], d["profiles"], d["tribes"], len(d["backups"]))')"
 
 printf '\n%d passed, %d failed\n' "${pass}" "${fail}"
 [ "${fail}" = "0" ]

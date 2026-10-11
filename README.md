@@ -36,7 +36,7 @@ RCON (27020/tcp) stays inside.
 
 | Variable | | |
 |---|---|---|
-| `ASE_MAP` | | `TheIsland` (default), `TheCenter`, `Ragnarok`, `Valguero_P`, `CrystalIsles`, `LostIsland`, `Fjordur`, `ScorchedEarth_P`, `Aberration_P`, `Extinction`, `Genesis`, `Gen2`. Free to host; players need the DLC for the last five |
+| `ASE_MAP` | | `TheIsland` (default), `TheCenter`, `Ragnarok`, `Valguero_P`, `CrystalIsles`, `LostIsland`, `Fjordur`, `ScorchedEarth_P`, `Aberration_P`, `Extinction`, `Genesis`, `Gen2`. Free to host; players need the DLC for the last five. The FIRST map: once the hub's Map tab picks one, that wins (the one exception to env-first) |
 | `ASE_SESSION_NAME` | `SessionName` | |
 | `ASE_MAX_PLAYERS` | `MaxPlayers` | |
 | `ASE_PASSWORD` | `ServerPassword` | no `?` |
@@ -58,6 +58,7 @@ RCON (27020/tcp) stays inside.
 | `flux-ase rcon <command...>` | `ListPlayers`, `SaveWorld`, `Broadcast <text>`, `ServerChat <text>`, `KickPlayer <id>`, `BanPlayer <id>`, `UnbanPlayer <id>`, `DestroyWildDinos`, `SetTimeOfDay HH:MM`, `GetChat`... |
 | `flux-ase settings` / `set-settings '<json>'` | every setting with its source; `map` too; the admin password |
 | `flux-ase mods` / `set-mods '{"mods": [...]}'` | |
+| `flux-ase saves` | the worlds on disk (one `.ark` per map: switching maps keeps each one), players, tribes, the game's `.bak` copies and our backups |
 | `flux-ase restart` | |
 
 ## Measured (build 21241282, ARK 361.7)
@@ -77,4 +78,5 @@ RCON (27020/tcp) stays inside.
 
 ## Versions
 
+- **1.0.1** (2026-10-11): `flux-ase saves` (the hub's Map tab lists the worlds and backups); the panel's map wins over `ASE_MAP`, which is the first map.
 - **1.0.0** (2026-10-11): first release.

@@ -13,6 +13,7 @@ commands.
     flux-ase settings                  every setting the panel edits, with where its value comes from
     flux-ase set-settings '<json>'     save settings (applied on the next start)
     flux-ase mods / set-mods '<json>'  the Workshop mods: {"mods": ["731604991", ...]}
+    flux-ase saves                     the worlds, players and tribes on disk, and the backups
     flux-ase restart                   save, stop and start again
 
 THE RCON IS NOT PUBLISHED: Source RCON on 127.0.0.1, reached by the hub's exec. The admin password
@@ -285,8 +286,17 @@ def admin_password():
 
 
 def map_name():
-    value = (os.environ.get("ASE_MAP") or load(SETTINGS_FILE).get("map") or "TheIsland").strip()
+    """THE ONE EXCEPTION to env-first: ASE_MAP is the FIRST map. Once the panel's Map tab picked
+    one, that is the map (the spec always carries ASE_MAP, so env-first would make the tab do
+    nothing). Each map keeps its own world file, so switching back finds that world again."""
+    value = (load(SETTINGS_FILE).get("map") or os.environ.get("ASE_MAP") or "TheIsland").strip()
     return value if value in MAPS else "TheIsland"
+
+
+def map_source():
+    if load(SETTINGS_FILE).get("map") in MAPS:
+        return "panel"
+    return "env" if os.environ.get("ASE_MAP") in MAPS else "default"
 
 
 def cmd_apply():
@@ -583,7 +593,7 @@ def cmd_settings():
         current[name] = raw
     shown = {k: ("(set)" if v else "") if k in SECRETS else v for k, v in values.items()}
     out({"values": shown, "sources": sources, "file": {k: (("(set)" if v else "") if k in SECRETS else v) for k, v in current.items()},
-         "map": map_name(), "maps": {k: {"name": v[0], "dlc": v[1]} for k, v in MAPS.items()},
+         "map": map_name(), "mapSource": map_source(), "maps": {k: {"name": v[0], "dlc": v[1]} for k, v in MAPS.items()},
          "adminPassword": admin_password(), "env": {k: v for k, v in ENV.items() if k in os.environ}})
 
 
@@ -634,6 +644,37 @@ def cmd_set_mods(raw):
     out({"ok": True, "mods": ids, "appliesOn": "restart"})
 
 
+def cmd_saves():
+    """The saves on the data volume: each map's world (.ark), the players (.arkprofile) and tribes
+    (.arktribe) it has, the game's own .bak copies, and our backups (flux/backups)."""
+    folder = os.path.join(SAVED, "SavedArks")
+    worlds, profiles, tribes, baks = [], 0, 0, []
+    if os.path.isdir(folder):
+        for name in sorted(os.listdir(folder)):
+            path = os.path.join(folder, name)
+            if not os.path.isfile(path):
+                continue
+            st = os.stat(path)
+            if name.endswith(".ark"):
+                worlds.append({"map": name[:-4], "name": MAPS.get(name[:-4], (name[:-4],))[0], "size": st.st_size,
+                               "modified": int(st.st_mtime), "active": name[:-4] == map_name()})
+            elif name.endswith(".arkprofile"):
+                profiles += 1
+            elif name.endswith(".arktribe"):
+                tribes += 1
+            elif name.endswith(".bak"):
+                baks.append({"file": name, "size": st.st_size, "modified": int(st.st_mtime)})
+    backups = []
+    bdir = os.path.join(STATE_DIR, "backups")
+    if os.path.isdir(bdir):
+        for name in sorted(os.listdir(bdir), reverse=True):
+            if name.endswith(".tar.gz"):
+                st = os.stat(os.path.join(bdir, name))
+                backups.append({"file": name, "size": st.st_size, "modified": int(st.st_mtime)})
+    out({"worlds": worlds, "profiles": profiles, "tribes": tribes, "gameBackups": baks,
+         "backups": backups, "path": "Saved/SavedArks", "backupPath": "flux/backups", "map": map_name()})
+
+
 def cmd_restart():
     pids = subprocess.run(["pgrep", "-f", r"ShooterGameServer "], capture_output=True, text=True).stdout.split()
     if not pids:
@@ -659,7 +700,7 @@ def main(argv):
         "admin-password": (lambda: print(admin_password()), (0,)), "status": (cmd_status, (0,)),
         "rcon": (cmd_rcon, tuple(range(1, 30))), "settings": (cmd_settings, (0,)),
         "set-settings": (cmd_set_settings, (1,)), "mods": (cmd_mods, (0,)), "set-mods": (cmd_set_mods, (1,)),
-        "restart": (cmd_restart, (0,)),
+        "saves": (cmd_saves, (0,)), "restart": (cmd_restart, (0,)),
     }
     if not argv or argv[0] not in commands or len(argv) - 1 not in commands[argv[0]][1]:
         print(__doc__, file=sys.stderr)
