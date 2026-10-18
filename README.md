@@ -91,6 +91,9 @@ transfers between this server's maps (`mapTransfers`: a one-server cluster in `S
 
 ## Versions
 
+- **1.0.3** (2026-10-18): built on the base pinned by digest and with Ubuntu's pending updates
+  applied; the scheduled CI run publishes only when there is something to apply
+  (`.github/ci/needs-rebuild.sh`), because every new `:latest` restarts every server.
 - **1.0.2** (2026-10-11): one save folder per map (with the migration of a flat layout); dated
   world copies pruned and left out of backups; backups not on every start, a retention that keeps
   a day-old and a week-old one; `flux-ase backups` / `restore`; failed game/mod updates not retried

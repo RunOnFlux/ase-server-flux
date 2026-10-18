@@ -5,12 +5,17 @@
 # from the environment and the hub's panel, downloads and unpacks Workshop mods (no arkmanager,
 # no Perl), keeps the RCON private, saves before every stop, follows game and mod updates with
 # in-game warnings, keeps backups, and gives the hub JSON status and RCON. See README.md.
-FROM steamcmd/steamcmd:ubuntu-24
+# The base. CI builds it pinned to the digest it resolved and records that digest in the
+# org.opencontainers.image.base.digest label, which the scheduled check compares against
+# (.github/ci/needs-rebuild.sh).
+ARG BASE_IMAGE=steamcmd/steamcmd:ubuntu-24
+FROM ${BASE_IMAGE}
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG FLUX_IMAGE_VERSION=dev
 
 RUN apt-get update -y && \
+    apt-get upgrade -y --no-install-recommends && \
     apt-get install -y --no-install-recommends ca-certificates curl procps tzdata python3 && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
