@@ -18,6 +18,7 @@ commands.
     flux-ase restore <backup>          restore one: a safety backup first, then the save is replaced
                                        and the server started again (applied by the supervisor)
     flux-ase restart                   save, stop and start again
+    flux-ase pending                   exit 0 when settings, mods or a restore wait for a restart
 
 THE RCON IS NOT PUBLISHED: Source RCON on 127.0.0.1, reached by the hub's exec. The admin password
 (also the in-game `enablecheats` password) is the RCON password.
@@ -65,6 +66,7 @@ RCON_PORT = int(os.environ.get("ASE_RCON_PORT", "27020"))
 SAVED_ARKS = os.path.join(SAVED, "SavedArks")
 BACKUP_DIR = os.environ.get("FLUX_BACKUP_DIR", os.path.join(STATE_DIR, "backups"))
 RESTORE_PENDING = os.path.join(STATE_DIR, "restore-pending")
+RESTORE_RESULT = os.path.join(STATE_DIR, "restore-result.json")
 UPDATE_TARGET = os.path.join(STATE_DIR, "update-target.json")
 UPDATE_FAILED = os.path.join(STATE_DIR, "update-failed.json")
 WORKSHOP_ACF = os.path.join(WORKSHOP, "steamapps", "workshop", "appworkshop_346110.acf")
@@ -807,7 +809,7 @@ def cmd_status():
          "name": ini_get(gus, "SessionSettings", "SessionName"), "players": players,
          "max_players": int(float(ini_get(gus, SESSION, "MaxPlayers") or 70)), "rcon": answering,
          "mods": [m for m in (read_json(MODS_STATE, {}) or {}).get("mods", [])],
-         "pending": pending(state)})
+         "pending": pending(state), "lastRestore": read_json(RESTORE_RESULT)})
 
 
 def pending(state):
@@ -820,6 +822,12 @@ def pending(state):
         except OSError:
             pass
     return False
+
+
+def cmd_pending():
+    """Exit 0 when settings, mods or a restore were saved after this start applied its own: the
+    supervisor restarts onto them once the server is up (saved while it was still starting)."""
+    sys.exit(0 if pending(read_json(STATE_FILE, {}) or {}) else 1)
 
 
 def cmd_settings():
@@ -972,12 +980,13 @@ def list_backups():
     return sorted(rows, key=lambda r: r["file"], reverse=True)
 
 
-def backups_to_prune(names_newest_first, times, keep, now=None):
+def backups_to_prune(names_newest_first, times, keep, now=None, protect=()):
     """Which backups to delete: all but the newest `keep`, EXCEPT the newest one older than a day
     and the newest one older than a week (a crash loop's backups can never push every good one
-    out). `times`: {name: epoch}."""
+    out), and those in `protect` (the one a pending restore names: the safety backup made before
+    it would otherwise push an old one out right before it is read). `times`: {name: epoch}."""
     now = time.time() if now is None else now
-    protected = set(names_newest_first[:keep])
+    protected = set(names_newest_first[:keep]) | set(protect)
     for age in (86400, 7 * 86400):
         older = [n for n in names_newest_first if now - times[n] >= age]
         if older:
@@ -988,7 +997,8 @@ def backups_to_prune(names_newest_first, times, keep, now=None):
 def cmd_backups_prune(keep):
     rows = list_backups()
     names = [r["file"] for r in rows]
-    for n in backups_to_prune(names, {r["file"]: r["modified"] for r in rows}, int(keep)):
+    pend = (read_json(RESTORE_PENDING) or {}).get("file")
+    for n in backups_to_prune(names, {r["file"]: r["modified"] for r in rows}, int(keep), protect=[pend] if pend else []):
         try:
             os.remove(os.path.join(BACKUP_DIR, n))
             print(f"# pruned {n}")
@@ -1030,17 +1040,30 @@ def cmd_restore(name):
         out({"ok": True, "restoring": name, "restarting": False, "appliesOn": "start"})
 
 
-def cmd_restore_apply():
-    """For the supervisor, the server stopped: the pending restore, if any. Prints what it did."""
+def cmd_restore_apply(safety="ok"):
+    """For the supervisor, the server stopped: the pending restore, if any. `safety` is "failed"
+    when the safety backup of the current saves could not be made: then nothing is touched, since
+    the current saves would have no copy. Prints what it did and leaves the outcome in
+    restore-result.json (`flux-ase status` lastRestore), which the panel reads."""
     pend = read_json(RESTORE_PENDING)
     if not pend:
         return
     name = pend.get("file", "")
     src = os.path.join(BACKUP_DIR, name)
-    os.remove(RESTORE_PENDING)
+
+    def done(ok, reason=None):
+        write_json(RESTORE_RESULT, {"file": name, "ok": ok, "reason": reason, "at": int(time.time())})
+        # Only now: a restore interrupted before this point (the container killed) is tried again.
+        try:
+            os.remove(RESTORE_PENDING)
+        except OSError:
+            pass
+        print(f"# restored {name}" if ok else f"# WARN restore: {reason}; nothing restored")
+
+    if safety != "ok":
+        return done(False, "the safety backup of the current saves could not be made (is the disk full?)")
     if not BACKUP_NAME_RE.match(name) or not os.path.isfile(src):
-        print(f"# WARN restore: {name} is gone; nothing restored")
-        return
+        return done(False, f"{name} is gone")
     import tarfile
     staging = os.path.join(DATA_DIR, ".flux-restore")
     shutil.rmtree(staging, ignore_errors=True)
@@ -1054,21 +1077,20 @@ def cmd_restore_apply():
                 t.extractall(staging, members=safe)
     except (OSError, tarfile.TarError) as e:
         shutil.rmtree(staging, ignore_errors=True)
-        print(f"# WARN restore: {name} could not be unpacked ({e}); nothing restored")
-        return
+        return done(False, f"{name} could not be unpacked ({e})")
     restored = os.path.join(staging, "Saved")
     if not os.path.isdir(restored):
         shutil.rmtree(staging, ignore_errors=True)
-        print(f"# WARN restore: {name} holds no Saved folder; nothing restored")
-        return
+        return done(False, f"{name} holds no Saved folder")
     old = os.path.join(DATA_DIR, f".flux-before-restore-{int(time.time())}")
     if os.path.isdir(SAVED):
         os.replace(SAVED, old)
     os.replace(restored, SAVED)
-    # The restored Logs/Config folders are the backup's; ARK's logs of today stay with the old copy.
+    # The current saves are in the pre-restore backup (made, or we would not be here); the
+    # restored Logs/Config folders are the backup's, ARK's logs of today stay with the old copy.
     shutil.rmtree(old, ignore_errors=True)
     shutil.rmtree(staging, ignore_errors=True)
-    print(f"# restored {name}")
+    done(True)
 
 
 # ------------------------------------------------------------------------------------------------
@@ -1135,8 +1157,8 @@ def main(argv):
         "admin-password": (lambda: print(admin_password()), (0,)), "status": (cmd_status, (0,)),
         "rcon": (cmd_rcon, tuple(range(1, 30))), "settings": (cmd_settings, (0,)),
         "set-settings": (cmd_set_settings, (1,)), "mods": (cmd_mods, (0,)), "set-mods": (cmd_set_mods, (1,)),
-        "saves": (cmd_saves, (0,)), "restart": (cmd_restart, (0,)),
-        "backups": (cmd_backups, (0,)), "restore": (cmd_restore, (1,)), "restore-apply": (cmd_restore_apply, (0,)),
+        "saves": (cmd_saves, (0,)), "restart": (cmd_restart, (0,)), "pending": (cmd_pending, (0,)),
+        "backups": (cmd_backups, (0,)), "restore": (cmd_restore, (1,)), "restore-apply": (cmd_restore_apply, (0, 1)),
         "backups-prune": (cmd_backups_prune, (1,)), "backup-due": (cmd_backup_due, (1,)),
         "update-due": (cmd_update_due, (2,)), "update-done": (cmd_update_done, (0,)),
         "mods-outdated": (cmd_mods_outdated, (0,)), "mask": (lambda *w: print(mask(" ".join(w))), tuple(range(0, 40))),

@@ -71,7 +71,7 @@ transfers between this server's maps (`mapTransfers`: a one-server cluster in `S
 | `flux-ase mods` / `set-mods '{"mods": [...]}'` | |
 | `flux-ase saves` | the worlds on disk (one `.ark` per map: switching maps keeps each one), players, tribes, the game's `.bak` copies and our backups |
 | `flux-ase saves` | each map's folder (world, players, tribes, dated copies, ARK's .bak), disk use |
-| `flux-ase backups` / `restore <file>` | our backups; a restore is applied before the next start, after a safety backup |
+| `flux-ase backups` / `restore <file>` | our backups; a restore is applied before the next start, only after a safety backup, and its outcome is `lastRestore` in `status` |
 | `flux-ase restart` | |
 
 ## Measured (build 21241282, ARK 361.7)
@@ -91,6 +91,10 @@ transfers between this server's maps (`mapTransfers`: a one-server cluster in `S
 
 ## Versions
 
+- **1.0.4** (2026-10-19): a restore never loses a backup or the current world: the backup it
+  waits for is never pruned, nothing is touched when the safety backup fails, and the outcome is
+  in `flux-ase status` (`lastRestore`) for the panel. Changes saved from the panel while the
+  server was still starting are applied by a restart once it is up (`flux-ase pending`).
 - **1.0.3** (2026-10-18): built on the base pinned by digest and with Ubuntu's pending updates
   applied; the scheduled CI run publishes only when there is something to apply
   (`.github/ci/needs-rebuild.sh`), because every new `:latest` restarts every server.

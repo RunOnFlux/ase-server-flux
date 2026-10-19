@@ -141,9 +141,10 @@ link_saved() {
 
 # $1 = why. A "start" backup is skipped when the newest is younger than
 # FLUX_BACKUP_MIN_AGE_MINUTES (a crash loop or a run of panel restarts would otherwise fill the
-# rotation with copies of the same, possibly broken, saves).
+# rotation with copies of the same, possibly broken, saves). Returns 1 when the backup failed (a
+# skipped one, or no saves to back up, is 0).
 backup_saves() {
-  local why="$1" out name rc
+  local why="$1" out name rc made=0
   [ "${FLUX_BACKUP_KEEP}" -gt 0 ] 2>/dev/null || return 0
   [ -d "${d}/Saved/SavedArks" ] || return 0
   if [ "${why}" = "start" ] && ! ase backup-due "${FLUX_BACKUP_MIN_AGE_MINUTES}"; then
@@ -162,11 +163,13 @@ backup_saves() {
   # whole (the files are read after a SaveWorld); kept when gzip says it is complete.
   if { [ "${rc}" = 0 ] || { [ "${rc}" = 1 ] && gzip -t "${out}.part" 2>/dev/null; }; } && mv "${out}.part" "${out}"; then
     flux_log "backup (${why}): flux/backups/${name}, $(du -h "${out}" | cut -f1)"
+    made=1
   else
     rm -f "${out}.part"
     flux_log "WARN backup (${why}) failed (tar exit ${rc})"
   fi
   while IFS= read -r line; do flux_log "backups: ${line#\# }"; done < <(ase backups-prune "${FLUX_BACKUP_KEEP}" 2>&1)
+  [ "${made}" = 1 ]
 }
 
 # shellcheck disable=SC2329  # run in the background below
@@ -208,6 +211,15 @@ watcher() {
     if rcon ListPlayers; then
       ase state running
       flux_log "the server is up (generation ${generation})"
+      # Settings, mods or a restore saved from the panel while this start was already past the
+      # step that applies them (installing, downloading mods, loading the map): restart onto them
+      # now, rather than leave them waiting for a restart nobody asked for.
+      if ase pending; then
+        printf '%s\n' "requested: changes saved while the server was starting" >"${FLUX_RESTART_MARKER}"
+        flux_log "changes were saved while the server was starting: restarting onto them"
+        stop_server
+        exit 0
+      fi
       break
     fi
     sleep 2
@@ -240,7 +252,7 @@ watcher() {
 }
 
 start_generation() {
-  local line url="" args=() extra=()
+  local line url="" args=() extra=() safety
   generation=$((generation + 1))
   rm -f "${FLUX_RESTART_MARKER}"
 
@@ -250,8 +262,9 @@ start_generation() {
   link_saved
   if [ -f "${FLUX_STATE_DIR}/restore-pending" ]; then
     ase state updating "Restoring a backup"
-    backup_saves "pre-restore"
-    while IFS= read -r line; do flux_log "restore: ${line#\# }"; done < <(ase restore-apply 2>&1)
+    # No safety backup, no restore: the current saves would be replaced with no copy of them.
+    if backup_saves "pre-restore"; then safety=ok; else safety=failed; fi
+    while IFS= read -r line; do flux_log "restore: ${line#\# }"; done < <(ase restore-apply "${safety}" 2>&1)
   fi
   ase state updating "Downloading and unpacking the mods"
   while IFS= read -r line; do

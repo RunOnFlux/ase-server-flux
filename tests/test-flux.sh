@@ -152,9 +152,16 @@ check "a restore of a missing backup is refused" "2" "$(status ase restore 20990
 check "a path is refused" "2" "$(status ase restore ../x.tar.gz)"
 check "a restore is accepted while stopped" "start" "$(ase restore 20261012-000000-ark.tar.gz | python3 -c 'import json,sys;print(json.load(sys.stdin)["appliesOn"])')"
 check "and is pending" "True" "$(ase status | python3 -c 'import json,sys;print(json.load(sys.stdin)["pending"])')"
-ase restore-apply >/dev/null
+ase backups-prune 0 >/dev/null
+check "the backup a restore waits for is never pruned" "0" "$(status test -f "${data}/flux/backups/20261012-000000-ark.tar.gz")"
+check "a failed safety backup restores nothing" "False" "$(ase restore-apply failed >/dev/null; ase status | python3 -c 'import json,sys;print(json.load(sys.stdin)["lastRestore"]["ok"])')"
+check "and the current saves stay" "1" "$(status grep -qs restored "${sa}/Ragnarok/Ragnarok.ark")"
+ase restore 20261012-000000-ark.tar.gz >/dev/null
+ase restore-apply ok >/dev/null
 check "the start applies it" "restored" "$(cat "${sa}/Ragnarok/Ragnarok.ark")"
+check "and says so" "True 20261012-000000-ark.tar.gz" "$(ase status | python3 -c 'import json,sys;r=json.load(sys.stdin)["lastRestore"];print(r["ok"], r["file"])')"
 check "once" "1" "$(status test -e "${data}/flux/restore-pending")"
+check "nothing waits for a restart" "1" "$(status ase pending)"
 
 # Updates that failed are not retried for 6 h.
 check "an update is due" "0" "$(status ase update-due 100 200)"
