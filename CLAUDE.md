@@ -34,3 +34,5 @@ docker run --rm -v "$PWD:/mnt" -w /mnt koalaman/shellcheck:stable -x scripts/*.s
 - **Dated `.ark` copies are never deleted by ARK**: `prune_dated` keeps FLUX_DATED_KEEP.
 - **A restore cannot be done by an exec**: `flux-ase restore` records it and restarts; the
   supervisor applies it before the next start (`restore-apply`), after a `pre-restore` backup.
+- **`flux.log` is local** (`$FLUX_SERVER_DIR/flux-logs/flux.log`, the `ml:` install volume; 5 MB then one `.1`), never on the synced data volume: a constantly written file there is constant Syncthing traffic. `flux_log_migrate` moves an old one off `data/flux/` at start. `flux_banner` prints the FluxCloud banner at container start and every generation; its text is tested. `state.json` and the backups stay in `data/flux/`.
+- **The scheduled CI run publishes only with something to apply** (`.github/ci/needs-rebuild.sh`): urgent security updates, or commits on main since the published `:latest` (label `org.opencontainers.image.revision`) that touch the image inputs; anything else waits for the first Monday of the month.

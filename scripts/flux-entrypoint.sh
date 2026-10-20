@@ -43,7 +43,10 @@ ase() { python3 /opt/flux/fluxase.py "$@"; }
 rcon() { python3 /opt/flux/fluxase.py rcon "$@" >/dev/null 2>&1; }
 
 rm -f "${FLUX_RESTART_MARKER}"
-mkdir -p "${s}" "${d}/Saved" "${FLUX_STATE_DIR}"
+mkdir -p "${s}" "${d}/Saved" "${FLUX_STATE_DIR}" "$(dirname "${FLUX_LOG}")"
+# An older image kept flux.log on the synced data volume: move it here, once.
+flux_log_migrate "${FLUX_STATE_DIR}/flux.log"
+flux_banner "ARK: Survival Evolved"
 # The state on the volume is the last container's: a "running" left from before must not read as
 # this one being up.
 ase state starting "Preparing the server"
@@ -307,6 +310,7 @@ start_generation() {
   [ "${terminating}" = "1" ] && return 2
 
   ase state starting "Loading the map (about a minute)"
+  flux_banner "ARK: Survival Evolved"
   flux_log "starting the server (generation ${generation}): $(ase mask "${url}") ${args[*]}"
   (
     cd "${s}/ShooterGame/Binaries/Linux" || exit 1

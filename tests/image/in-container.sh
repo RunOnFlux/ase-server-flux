@@ -82,6 +82,7 @@ STUB
 chmod +x /usr/local/bin/steamcmd
 
 data=/mnt/ase/data
+logf=/mnt/ase/server/flux-logs/flux.log
 export FLUX_RESTART_BACKOFF=1 FLUX_UPDATE_CHECK_MINUTES=0 FLUX_STOP_GRACE=3 ASE_SESSION_NAME="Image Test"
 /opt/flux/flux-entrypoint.sh >/tmp/entry.log 2>&1 &
 entry=$!
@@ -103,7 +104,7 @@ check "a backup on the second start" "0" "$(status wait_for 'ls ${data}/flux/bac
 echo before-restore >"${data}/Saved/SavedArks/Ragnarok/marker.txt"
 backup="$(flux-ase backups | python3 -c 'import json,sys;print(json.load(sys.stdin)["backups"][-1]["file"])')"
 check "a restore is accepted while running" "True" "$(flux-ase restore "${backup}" | python3 -c 'import json,sys;print(json.load(sys.stdin)["restarting"])')"
-check "the server comes back after the restore" "0" "$(status wait_for '! test -e ${data}/flux/restore-pending && grep -q "\"running\"" ${data}/flux/state.json && grep -q "restored ${backup}" ${data}/flux/flux.log' 60)"
+check "the server comes back after the restore" "0" "$(status wait_for '! test -e ${data}/flux/restore-pending && grep -q "\"running\"" ${data}/flux/state.json && grep -q "restored ${backup}" ${logf}' 60)"
 check "a safety backup was taken first" "1" "$(find "${data}/flux/backups" -name '*-ark-pre-restore.tar.gz' | wc -l)"
 check "the saves are the backup's" "1" "$(status test -e "${data}/Saved/SavedArks/Ragnarok/marker.txt")"
 
@@ -111,7 +112,14 @@ kill -TERM "${entry}"
 check "a stop ends the supervisor" "0" "$(status wait_for '! kill -0 ${entry} 2>/dev/null' 30)"
 check "with the world saved first, in the map's own folder" "0" "$(status grep -q saved "${data}/Saved/SavedArks/Ragnarok/Ragnarok.ark")"
 check "and says it was saved" "Saved and stopped" "$(python3 -c 'import json;print(json.load(open("'"${data}"'/flux/state.json"))["message"])')"
-check "the log never shows the admin password" "0" "$(grep -c "ServerAdminPassword=$(flux-ase admin-password)" "${data}/flux/flux.log")"
+check "the log never shows the admin password" "0" "$(grep -c "ServerAdminPassword=$(flux-ase admin-password)" "${logf}")"
+
+# --- flux.log is local; the banner ----------------------------------------------------------------
+check "flux.log is on the install volume" "0" "$(status test -s "${logf}")"
+check "and not on the synced data volume" "1" "$(status test -e "${data}/flux/flux.log")"
+check "the banner is in the container output" "0" "$(status grep -q 'ARK: Survival Evolved server image by FluxCloud - https://runonflux.com' /tmp/entry.log)"
+check "and in flux.log" "0" "$(status grep -q 'Host this and 30+ other games in one click: https://runonflux.com/games' "${logf}")"
+check "at the container start and again for each generation" "1" "$([ "$(grep -c 'server image by FluxCloud' /tmp/entry.log)" -ge 2 ] && echo 1 || echo 0)"
 
 printf '\n%d passed, %d failed\n' "${pass}" "${fail}"
 [ "${fail}" = "0" ] || { echo '--- entrypoint log'; cat /tmp/entry.log; exit 1; }

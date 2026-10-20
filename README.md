@@ -28,8 +28,8 @@ updated with SteamCMD on every start, under a supervisor that:
 
 | Path | Flux mount | What |
 |---|---|---|
-| `/mnt/ase/data` | `g:` (synced) | `Saved/` (the install's `ShooterGame/Saved` links here: `SavedArks/` with the world, players and tribes, `Config/LinuxServer/*.ini`), `cluster/` when `ASE_CLUSTER_ID` is set, and `flux/` |
-| `/mnt/ase/server` | `ml:server` (local) | the game (~22 GB) and the unpacked mods. Downloaded again on a new node |
+| `/mnt/ase/data` | `g:` (synced) | `Saved/` (the install's `ShooterGame/Saved` links here: `SavedArks/` with the world, players and tribes, `Config/LinuxServer/*.ini`), `cluster/` when `ASE_CLUSTER_ID` is set, and `flux/` (state, backups) |
+| `/mnt/ase/server` | `ml:server` (local) | the game (~22 GB) and the unpacked mods, downloaded again on a new node; also `flux-logs/flux.log`, our supervisor log (5 MB, then one `.1`): local, never synced |
 
 ## Ports
 
@@ -91,6 +91,10 @@ transfers between this server's maps (`mapTransfers`: a one-server cluster in `S
 
 ## Versions
 
+- **1.0.5** (2026-10-20): `flux.log` moved off the synced data volume to `/mnt/ase/server/flux-logs/flux.log`
+  (5 MB, one `.1`; an old one is moved there once); start-up banner at the container start and on
+  every generation; the Monday CI run also builds when commits touching the image inputs are not
+  published yet (`.github/ci/needs-rebuild.sh`).
 - **1.0.4** (2026-10-19): a restore never loses a backup or the current world: the backup it
   waits for is never pruned, nothing is touched when the safety backup fails, and the outcome is
   in `flux-ase status` (`lastRestore`) for the panel. Changes saved from the panel while the
