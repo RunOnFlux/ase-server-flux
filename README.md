@@ -91,6 +91,7 @@ transfers between this server's maps (`mapTransfers`: a one-server cluster in `S
 
 ## Versions
 
+- **1.0.6** (2026-10-28): the ini files and their folder are open to FluxOS's file editor (they were root 0600, so editing `Game.ini` said "access denied"); repaired at every start and after every game exit.
 - **1.0.5** (2026-10-20): `flux.log` moved off the synced data volume to `/mnt/ase/server/flux-logs/flux.log`
   (5 MB, one `.1`; an old one is moved there once); start-up banner at the container start and on
   every generation; the Monday CI run also builds when commits touching the image inputs are not

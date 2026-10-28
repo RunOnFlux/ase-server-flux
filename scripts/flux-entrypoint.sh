@@ -331,6 +331,8 @@ sweep_generation() {
   done
   watch_pid="" backup_pid=""
   pkill -KILL -f 'ShooterGameServer ' 2>/dev/null
+  # ARK rewrites GameUserSettings.ini on its way out: keep it open to the owner's file editor
+  ase open-config >/dev/null 2>&1
   game_pid=""
 }
 

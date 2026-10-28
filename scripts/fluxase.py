@@ -150,6 +150,22 @@ def write_text(path, text, mode=None):
     os.replace(tmp, path)
 
 
+# The owner edits the ini files from the panel and from FluxOS's file editor, which does not run as
+# root: mkstemp makes 0600 root files, which that editor cannot open ("access denied").
+INI_MODE = 0o666
+
+
+def open_config():
+    """Every ini file in the config folder, and the folder, open to the owner's editors."""
+    try:
+        os.chmod(CONFIG_DIR, 0o777)
+        for n in os.listdir(CONFIG_DIR):
+            if n.endswith(".ini"):
+                os.chmod(os.path.join(CONFIG_DIR, n), INI_MODE)
+    except OSError:
+        pass
+
+
 def write_json(path, data, indent=2):
     write_text(path, json.dumps(data, indent=indent, ensure_ascii=False) + "\n")
 
@@ -442,8 +458,10 @@ def cmd_apply():
                                              "ActiveMods": ",".join(mods)})
     if "password" not in values:
         changes["gus"][SS]["ServerPassword"] = ini_get(read_ini(GUS), SS, "ServerPassword") or ""
-    write_text(GUS, set_ini(read_ini(GUS), changes["gus"]))
-    write_text(GAME_INI, set_ini(read_ini(GAME_INI), changes["game"]) if changes["game"] else (read_ini(GAME_INI) or "\n"))
+    write_text(GUS, set_ini(read_ini(GUS), changes["gus"]), mode=INI_MODE)
+    write_text(GAME_INI, set_ini(read_ini(GAME_INI), changes["game"]) if changes["game"] else (read_ini(GAME_INI) or "\n"),
+               mode=INI_MODE)
+    open_config()
     state = read_json(STATE_FILE, {}) or {}
     state.update({"applied": int(time.time()) + 1, "map": map_name(), "modMap": mid, "saveFolder": save_folder()})
     write_json(STATE_FILE, state, indent=None)
@@ -1153,7 +1171,7 @@ def cmd_restart():
 
 def main(argv):
     commands = {
-        "apply": (cmd_apply, (0,)), "sync-mods": (cmd_sync_mods, (0,)), "state": (cmd_state, (1, 2)),
+        "apply": (cmd_apply, (0,)), "open-config": (open_config, (0,)), "sync-mods": (cmd_sync_mods, (0,)), "state": (cmd_state, (1, 2)),
         "admin-password": (lambda: print(admin_password()), (0,)), "status": (cmd_status, (0,)),
         "rcon": (cmd_rcon, tuple(range(1, 30))), "settings": (cmd_settings, (0,)),
         "set-settings": (cmd_set_settings, (1,)), "mods": (cmd_mods, (0,)), "set-mods": (cmd_set_mods, (1,)),
