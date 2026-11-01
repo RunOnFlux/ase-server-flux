@@ -91,6 +91,23 @@ transfers between this server's maps (`mapTransfers`: a one-server cluster in `S
 
 ## Versions
 
+- **1.1.0** (2026-11-01): every ARK option the hub can set.
+  - `scripts/catalog.json` is the one list of 280 `GameUserSettings.ini` / `Game.ini` settings, taken from
+    ark.wiki.gg/wiki/Server_configuration (ASE column), including the indexed per-level stat keys
+    (`PerLevelStatsMultiplier_*[n]`, `PlayerBaseStatMultipliers[n]`, `MutagenLevelBoost[n]`). The hub's Server
+    Settings tab is built from a copy of it.
+  - `launch` (32 known dash flags such as `-ForceAllowCaveFlyers`, `-culture=`, `-ActiveEvent=`) and `extraArgs`
+    (any other `-Flag`) in `flux-ase set-settings`: stored in `settings.json`, printed by `apply` as `ARG`
+    lines, so no spec change is needed. Flags the image owns (`-Port`, `-NoBattlEye`, `-MapModID`,
+    `-clusterid`...) are refused, with the reason.
+  - `lists`: 15 repeated-key `Game.ini` lists (item stack limits, engram changes, per-creature damage,
+    resistance, speed and stamina, spawn weights, replacements, breeding/taming/transfer blocks) as typed
+    entries; the image renders the lines and rewrites every line of a key it manages, leaving keys it never
+    touched alone. An emptied list deletes its lines once. `flux-ase settings` reports `listSchemas`.
+    Not covered: order-dependent lists (`LevelExperienceRampOverrides`, `OverridePlayerLevelEngramPoints`)
+    and the nested ones (supply crates, crafting costs, spawn containers).
+  - `set-settings` with `null` for a setting deletes its line from the ini (back to the game's default).
+  - ini section and key names are matched case-insensitively; whole-number settings refuse a fraction.
 - **1.0.6** (2026-10-28): the ini files and their folder are open to FluxOS's file editor (they were root 0600, so editing `Game.ini` said "access denied"); repaired at every start and after every game exit.
 - **1.0.5** (2026-10-20): `flux.log` moved off the synced data volume to `/mnt/ase/server/flux-logs/flux.log`
   (5 MB, one `.1`; an old one is moved there once); start-up banner at the container start and on

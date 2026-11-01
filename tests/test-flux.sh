@@ -196,5 +196,91 @@ check "and deleted from the data volume" "1" "$(status test -e "${lt}/old.log")"
 check "migrating with nothing to migrate is harmless" "0" "$(FLUX_LOG="${lt}/mig.log" status flux_log_migrate "${lt}/old.log")"
 rm -rf "${lt}"
 
+# ---- Launch options (1.1.0): the panel's flags reach the launch line as ARG lines, never the URL.
+rm -f "${data}/flux/settings.json"
+check "no flags by default" "" "$(ase apply | grep '^ARG ' | tr '\n' ' ')"
+check "a known flag is accepted" "0" "$(status ase set-settings '{"launch": {"forceAllowCaveFlyers": true, "culture": "pt_BR", "maxSaveBackups": 12}}')"
+check "it becomes an ARG line, in table order" "ARG -ForceAllowCaveFlyers ARG -culture=pt_BR ARG -MaxNumOfSaveBackups=12" "$(ase apply | grep '^ARG ' | tr '\n' ' ' | sed 's/ $//')"
+check "false removes the flag" "" "$(ase set-settings '{"launch": {"forceAllowCaveFlyers": false, "culture": null, "maxSaveBackups": null}}' >/dev/null; ase apply | grep '^ARG ' | tr '\n' ' ')"
+check "an unknown launch option is refused" "2" "$(status ase set-settings '{"launch": {"nope": true}}')"
+check "a bad word value is refused" "2" "$(status ase set-settings '{"launch": {"culture": "a b"}}')"
+check "free flags are kept and listed" "ARG -UseVivox ARG -foo=1" "$(ase set-settings '{"extraArgs": "-UseVivox -foo=1 -usevivox"}' >/dev/null; ase apply | grep '^ARG ' | tr '\n' ' ' | sed 's/ $//')"
+check "the owned flags are refused, with the flag named" "2" "$(status ase set-settings '{"extraArgs": "-Port=1234"}')"
+check "-NoBattlEye is owned" "2" "$(status ase set-settings '{"extraArgs": "-NoBattlEye"}')"
+check "a ? option is refused" "2" "$(status ase set-settings '{"extraArgs": "?Foo=1"}')"
+# shellcheck disable=SC2016
+check "shell characters are refused" "2" "$(status ase set-settings '{"extraArgs": "-a=$(id)"}')"
+check "a flag set twice keeps the table's" "ARG -ForceAllowCaveFlyers" "$(ase set-settings '{"launch": {"forceAllowCaveFlyers": true}, "extraArgs": "-forceallowcaveflyers"}' >/dev/null; ase apply | grep '^ARG ' | tr '\n' ' ' | sed 's/ $//')"
+check "the panel reads its launch state back" "True" "$(ase settings | python3 -c 'import json,sys;print(json.load(sys.stdin)["launch"]["forceAllowCaveFlyers"])')"
+rm -f "${data}/flux/settings.json"
+
+# ---- The catalog: every entry is valid, unique, and reaches the right file and section.
+check "the catalog is well formed" "ok" "$(python3 - <<'PY'
+import json, sys
+sys.path.insert(0, "scripts")
+import fluxase as a
+c = json.load(open("scripts/catalog.json"))
+groups = {g["id"] for g in c["groups"]}
+seen = set()
+for s in c["settings"]:
+    assert s["kind"] in ("bool", "int", "float"), s
+    assert s["group"] in groups, s
+    assert (s["file"], s["ini"].lower()) not in seen, s
+    seen.add((s["file"], s["ini"].lower()))
+    assert s["key"] in a.SETTINGS, s
+    if s["kind"] != "bool":
+        assert s["min"] <= s["official"] <= s["max"], s
+print("ok")
+PY
+)"
+check "a Game.ini catalog setting lands in Game.ini" "0.500000" "$(ase set-settings '{"killXp": 0.5}' >/dev/null; ase apply >/dev/null; iniv "${game}" /script/shootergame.shootergamemode KillXPMultiplier)"
+check "a ServerSettings catalog setting lands in the gus" "True" "$(ase set-settings '{"pickup": true}' >/dev/null; ase apply >/dev/null; iniv "${gus}" ServerSettings AlwaysAllowStructurePickup)"
+check "the MOTD duration goes to its own section" "30" "$(ase set-settings '{"motdDuration": 30}' >/dev/null; ase apply >/dev/null; iniv "${gus}" MessageOfTheDay Duration)"
+rm -f "${data}/flux/settings.json"
+
+# Section names are case-insensitive, like Unreal's: a Game.ini written with the capitalised section is updated, not duplicated.
+printf '[/Script/ShooterGame.ShooterGameMode]\nKillXPMultiplier=9\nOther=1\n' >"${game}"
+ase set-settings '{"killXp": 0.5}' >/dev/null; ase apply >/dev/null
+check "a capitalised Game.ini section is updated in place" "1 0.500000 1" "$(grep -ci 'shootergamemode\]' "${game}") $(iniv "${game}" /script/shootergame.shootergamemode KillXPMultiplier) $(iniv "${game}" /Script/ShooterGame.ShooterGameMode Other)"
+check "and the stale line is gone" "1" "$(grep -ci '^KillXPMultiplier=' "${game}")"
+check "a whole number setting refuses a fraction" "2" "$(status ase set-settings '{"maxTamedDinos": 5000.5}')"
+rm -f "${data}/flux/settings.json"
+
+# Back to the game's default: null deletes the line from the ini (once), setting it again writes it.
+printf '[/script/shootergame.shootergamemode]\nKillXPMultiplier=9\nOther=1\n' >"${game}"
+ase set-settings '{"killXp": 2}' >/dev/null; ase apply >/dev/null
+ase set-settings '{"killXp": null}' >/dev/null; ase apply >/dev/null
+check "null removes the setting's line, keeps the others" "0 1" "$(grep -ci '^KillXPMultiplier=' "${game}") $(iniv "${game}" /script/shootergame.shootergamemode Other)"
+check "the reset is spent after one apply" "0" "$(grep -c '"reset"' "${data}/flux/settings.json")"
+rm -f "${data}/flux/settings.json"
+
+# ---- Phase 2: indexed keys and repeated-key lists.
+rm -f "${data}/flux/settings.json"
+printf '[/script/shootergame.shootergamemode]\nConfigOverrideItemMaxQuantity=(ItemClassString="Hand_C",Quantity=(MaxItemQuantity=1,bIgnoreMultiplier=False))\nPreventTransferForClassNames="Mine_C"\nOther=1\n' >"${game}"
+check "the panel takes a list" "0" "$(status ase set-settings '{"lists": {"itemMaxQuantity": [{"className": "PrimalItemAmmo_ArrowTranq_C", "maxQuantity": 543, "ignoreMultiplier": true}, {"className": "PrimalItemResource_Wood_C", "maxQuantity": 1000}]}}')"
+ase apply >/dev/null
+check "one rendered line per entry, the old lines of that key replaced" "2 1 0" "$(grep -c '^ConfigOverrideItemMaxQuantity=' "${game}") $(grep -c 'MaxItemQuantity=543,bIgnoreMultiplier=True' "${game}") $(grep -c 'MaxItemQuantity=1,' "${game}")"
+check "a list key the panel never managed keeps the owner's own line" "1" "$(grep -c '^PreventTransferForClassNames="Mine_C"' "${game}")"
+check "and other keys stay" "1" "$(iniv "${game}" /script/shootergame.shootergamemode Other)"
+check "an emptied list deletes its lines, once" "0" "$(ase set-settings '{"lists": {"itemMaxQuantity": []}}' >/dev/null; ase apply >/dev/null; grep -c '^ConfigOverrideItemMaxQuantity=' "${game}")"
+check "and is not managed afterwards" "0" "$(grep -c 'itemMaxQuantity' "${data}/flux/settings.json" 2>/dev/null)"
+check "a class name with quotes is refused" "2" "$(status ase set-settings '{"lists": {"dinoDamage": [{"className": "Rex\"_C", "multiplier": 2}]}}')"
+check "a class name with a space is refused" "2" "$(status ase set-settings '{"lists": {"dinoDamage": [{"className": "Rex C", "multiplier": 2}]}}')"
+check "a missing field is refused" "2" "$(status ase set-settings '{"lists": {"dinoDamage": [{"className": "Rex_C"}]}}')"
+check "a class listed twice is refused" "2" "$(status ase set-settings '{"lists": {"dinoDamage": [{"className": "Rex_C", "multiplier": 2}, {"className": "rex_c", "multiplier": 3}]}}')"
+check "an engram override with nothing to change is refused" "2" "$(status ase set-settings '{"lists": {"engramOverride": [{"className": "EngramEntry_Campfire_C"}]}}')"
+check "an unknown list is refused" "2" "$(status ase set-settings '{"lists": {"nope": []}}')"
+ase set-settings '{"lists": {"engramOverride": [{"className": "EngramEntry_StoneHatchet_C", "hidden": false, "pointsCost": 3, "levelRequirement": 3, "removePrereq": true}], "spawnWeight": [{"className": "Bronto", "weight": 10, "limitPercent": 0.5}], "npcReplacement": [{"fromClass": "A_C", "toClass": "B_C"}], "preventBreeding": [{"className": "Rex_C"}]}}' >/dev/null
+ase apply >/dev/null
+check "engram override line" '1' "$(grep -c '^OverrideNamedEngramEntries=(EngramClassName="EngramEntry_StoneHatchet_C",EngramHidden=False,EngramPointsCost=3,EngramLevelRequirement=3,RemoveEngramPreReq=True)$' "${game}")"
+check "spawn weight line" '1' "$(grep -c '^DinoSpawnWeightMultipliers=(DinoNameTag=Bronto,SpawnWeightMultiplier=10.0,OverrideSpawnLimitPercentage=True,SpawnLimitPercentage=0.5)$' "${game}")"
+check "replacement and prevent lines" '1 1' "$(grep -c '^NPCReplacements=(FromClassName="A_C",ToClassName="B_C")$' "${game}") $(grep -c '^PreventBreedingForClassNames="Rex_C"$' "${game}")"
+check "the panel reports the list schemas and what is already in the file" "ok" "$(ase settings | python3 -c 'import json,sys;d=json.load(sys.stdin);print("ok" if "dinoDamage" in d["listSchemas"] and d["listLinesInFile"]["preventTransfer"]==1 and d["lists"]["preventBreeding"] else "no")')"
+rm -f "${data}/flux/settings.json"
+# Indexed keys are plain keys with [n] in the name.
+check "an indexed stat setting is written and read back" "2.500000 2.500000" "$(ase set-settings '{"statPlayer7": 2.5}' >/dev/null; ase apply >/dev/null; iniv "${game}" /script/shootergame.shootergamemode 'PerLevelStatsMultiplier_Player[7]') $(ase settings | python3 -c 'import json,sys;print(json.load(sys.stdin)["file"]["statPlayer7"])')"
+check "a stat multiplier of 0 is refused (the game would read it as 1)" "2" "$(status ase set-settings '{"statPlayer7": 0}')"
+rm -f "${data}/flux/settings.json"
+
 printf '\n%d passed, %d failed\n' "${pass}" "${fail}"
 [ "${fail}" = "0" ]

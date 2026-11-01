@@ -90,6 +90,7 @@ check "the server comes up (its RCON answers)" "0" "$(status wait_for 'grep -q "
 check "on the default map" "1" "$(pgrep -af 'ShooterGameServer ' | grep -c 'TheIsland?listen')"
 check "without BattlEye by default" "1" "$(pgrep -af 'ShooterGameServer ' | grep -c -- '-NoBattlEye')"
 check "Saved/ is the data volume" "${data}/Saved" "$(readlink /mnt/ase/server/ShooterGame/Saved)"
+check "the settings catalog is found through the flux-ase symlink" "1" "$(flux-ase settings | python3 -c 'import json,sys;f=json.load(sys.stdin)["file"];print(1 if len(f) > 150 and "killXp" in f else 0)')"
 check "status over RCON" "True []" "$(flux-ase status | python3 -c 'import json,sys;d=json.load(sys.stdin);print(d["rcon"], d["players"])')"
 check "an RCON command" "World Saved" "$(flux-ase rcon SaveWorld | python3 -c 'import json,sys;print(json.load(sys.stdin)["reply"])')"
 
@@ -97,6 +98,12 @@ flux-ase set-settings '{"map": "Ragnarok"}' >/dev/null
 flux-ase restart >/dev/null
 check "a panel restart saves, gives up on the hang, comes back on the new map" "0" "$(status wait_for 'pgrep -af "ShooterGameServer " | grep -q Ragnarok && grep -q "\"running\"" ${data}/flux/state.json' 60)"
 check "not counted as a crash" "0" "$(grep -c 'restarts within' /tmp/entry.log)"
+
+# A launch option saved in the panel reaches the server's command line after a restart.
+flux-ase set-settings '{"launch": {"forceAllowCaveFlyers": true}, "extraArgs": "-UseVivox"}' >/dev/null
+flux-ase restart >/dev/null
+check "a panel launch flag and a free one are on the server's command line" "0" "$(status wait_for 'pgrep -af "ShooterGameServer " | grep -q -- "-ForceAllowCaveFlyers.*-UseVivox" && grep -q "\"running\"" ${data}/flux/state.json' 60)"
+check "and the supervisor's own flags are still there" "1" "$(pgrep -af 'ShooterGameServer ' | grep -c -- '-server -log -NoBattlEye')"
 check "a backup on the second start" "0" "$(status wait_for 'ls ${data}/flux/backups/*-ark.tar.gz' 5)"
 
 # A restore while running: the server saves, a safety backup is taken, the archive replaces the

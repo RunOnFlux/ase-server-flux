@@ -86,44 +86,183 @@ MAPS = {
 SS = "ServerSettings"
 SESSION = "/Script/Engine.GameSession"
 MODE = "/script/shootergame.shootergamemode"
-# setting: (file, section, key, kind, limit)
+# setting: (file, section, key, kind, limit). The four below are special (a name, a count, a secret, a
+# message); every other setting comes from catalog.json, the one list the hub's Server Settings tab
+# is built from too (a test keeps the two copies identical).
 SETTINGS = {
     "sessionName": ("gus", "SessionSettings", "SessionName", "text", 64),
     "maxPlayers": ("gus", SESSION, "MaxPlayers", "int", 255),
     "password": ("gus", SS, "ServerPassword", "text", 64),
-    "pve": ("gus", SS, "serverPVE", "bool", None),
-    "xp": ("gus", SS, "XPMultiplier", "float", 1000),
-    "taming": ("gus", SS, "TamingSpeedMultiplier", "float", 1000),
-    "harvest": ("gus", SS, "HarvestAmountMultiplier", "float", 1000),
-    "difficulty": ("gus", SS, "OverrideOfficialDifficulty", "float", 100),
-    "dayCycle": ("gus", SS, "DayCycleSpeedScale", "float", 100),
-    "dayTime": ("gus", SS, "DayTimeSpeedScale", "float", 100),
-    "nightTime": ("gus", SS, "NightTimeSpeedScale", "float", 100),
-    "stackSize": ("gus", SS, "ItemStackSizeMultiplier", "float", 1000),
-    "thirdPerson": ("gus", SS, "AllowThirdPersonPlayer", "bool", None),
-    "crosshair": ("gus", SS, "ServerCrosshair", "bool", None),
-    "mapPlayerLocation": ("gus", SS, "ShowMapPlayerLocation", "bool", None),
-    "flyerCarry": ("gus", SS, "AllowFlyerCarryPvE", "bool", None),
-    "noDecayPvE": ("gus", SS, "DisableStructureDecayPvE", "bool", None),
-    "offlinePvP": ("gus", SS, "PreventOfflinePvP", "bool", None),
-    "autoSaveMinutes": ("gus", SS, "AutoSavePeriodMinutes", "float", 600),
-    "kickIdleSeconds": ("gus", SS, "KickIdlePlayersPeriod", "float", 86400),
-    "maxTamedDinos": ("gus", SS, "MaxTamedDinos", "int", 100000),
-    "foodDrain": ("gus", SS, "PlayerCharacterFoodDrainMultiplier", "float", 100),
-    "waterDrain": ("gus", SS, "PlayerCharacterWaterDrainMultiplier", "float", 100),
-    "playerDamage": ("gus", SS, "PlayerDamageMultiplier", "float", 100),
-    "dinoDamage": ("gus", SS, "DinoDamageMultiplier", "float", 100),
-    "structureDamage": ("gus", SS, "StructureDamageMultiplier", "float", 100),
-    "dinoCount": ("gus", SS, "DinoCountMultiplier", "float", 100),
     "motd": ("gus", "MessageOfTheDay", "Message", "text", 500),
-    "mating": ("game", MODE, "MatingIntervalMultiplier", "float", 100),
-    "eggHatch": ("game", MODE, "EggHatchSpeedMultiplier", "float", 1000),
-    "babyMature": ("game", MODE, "BabyMatureSpeedMultiplier", "float", 1000),
-    "cuddleInterval": ("game", MODE, "BabyCuddleIntervalMultiplier", "float", 100),
-    "imprintScale": ("game", MODE, "BabyImprintingStatScaleMultiplier", "float", 100),
-    "cropGrowth": ("game", MODE, "CropGrowthSpeedMultiplier", "float", 1000),
-    "unlimitedRespecs": ("game", MODE, "bAllowUnlimitedRespecs", "bool", None),
 }
+# realpath: `flux-ase` is a symlink to this file, and the catalog sits beside the real one.
+CATALOG_FILE = os.path.join(os.path.dirname(os.path.realpath(__file__)), "catalog.json")
+try:
+    with open(CATALOG_FILE, encoding="utf-8") as _f:
+        CATALOG = json.load(_f)
+except (OSError, ValueError) as _e:
+    # Never start with a silently empty catalog: the panel would offer 4 settings and a save of any
+    # other would be refused with no reason. Say so, loudly, in the supervisor's log.
+    print(f"flux-ase: cannot read {CATALOG_FILE}: {_e}", file=sys.stderr)
+    CATALOG = {"groups": [], "settings": []}
+MINS = {}
+for _s in CATALOG["settings"]:
+    if _s.get("matrix"):
+        MINS[_s["key"]] = _s.get("min", 0)  # the game reads 0 as 1.0 on these: 0.01 is the floor
+    SETTINGS[_s["key"]] = (_s["file"], _s.get("section") or (MODE if _s["file"] == "game" else SS), _s["ini"],
+                           _s["kind"], _s.get("max"))
+
+# Launch options: dash flags the dedicated server takes (ark.wiki.gg/wiki/Server_configuration, ASE
+# column). The panel stores them in settings.json under "launch"; `apply` prints them as ARG lines.
+# kind: bool = the bare flag; int/float/word = -Flag=value. Fixed list on purpose: a typo in a free
+# flag is a server that starts without it and says nothing.
+LAUNCH = {
+    "forceAllowCaveFlyers": ("-ForceAllowCaveFlyers", "bool", None),
+    "allowFlyerSpeedLeveling": ("-AllowFlyerSpeedLeveling", "bool", None),
+    "autoDestroyStructures": ("-AutoDestroyStructures", "bool", None),
+    "disableRailgunPvp": ("-DisableRailgunPVP", "bool", None),
+    "enableIdlePlayerKick": ("-EnableIdlePlayerKick", "bool", None),
+    "forceRespawnDinos": ("-ForceRespawnDinos", "bool", None),
+    "noDinos": ("-NoDinos", "bool", None),
+    "noWildBabies": ("-NoWildBabies", "bool", None),
+    "noHangDetection": ("-NoHangDetection", "bool", None),
+    "notifyAdminCommandsInChat": ("-NotifyAdminCommandsInChat", "bool", None),
+    "noUnderMeshChecking": ("-noundermeshchecking", "bool", None),
+    "noUnderMeshKilling": ("-noundermeshkilling", "bool", None),
+    "noAntiSpeedHack": ("-noantispeedhack", "bool", None),
+    "pveDisallowTribeWar": ("-pvedisallowtribewar", "bool", None),
+    "secureSendArkPayload": ("-SecureSendArKPayload", "bool", None),
+    "serverAllowAnsel": ("-ServerAllowAnsel", "bool", None),
+    "serverGameLog": ("-servergamelog", "bool", None),
+    "serverGameLogTribeLogs": ("-servergamelogincludetribelogs", "bool", None),
+    "serverRconOutputTribeLogs": ("-ServerRCONOutputTribeLogs", "bool", None),
+    "stasisKeepControllers": ("-StasisKeepControllers", "bool", None),
+    "structureMemOpts": ("-structurememopts", "bool", None),
+    "useItemDupeCheck": ("-UseItemDupeCheck", "bool", None),
+    "useSecureSpawnRules": ("-UseSecureSpawnRules", "bool", None),
+    "useStructureStasisGrid": ("-UseStructureStasisGrid", "bool", None),
+    "webAlarm": ("-webalarm", "bool", None),
+    "noTransferFromFiltering": ("-NoTransferFromFiltering", "bool", None),
+    "disableCustomTributeFolders": ("-DisableCustomFoldersInTributeInventories", "bool", None),
+    "activeEvent": ("-ActiveEvent", "word", 40),
+    "culture": ("-culture", "word", 12),
+    "maxSaveBackups": ("-MaxNumOfSaveBackups", "int", 1000),
+    "inventoryRetrievalSeconds": ("-MinimumTimeBetweenInventoryRetrieval", "int", 31536000),
+    "speedhackBias": ("-speedhackbias", "float", 100),
+}
+# Flags the image sets itself, or that would break how it runs the server: refused in "extraArgs".
+OWNED_FLAGS = {
+    "server", "log", "port", "queryport", "nobattleye", "crossplay", "publicipforepic", "mapmodid",
+    "clusterid", "clusterdiroverride", "winlivemaxplayers", "multihome", "ip", "serverip", "game",
+    "altsavedirectoryname", "mods", "totalconversionmod", "automanagedmods",
+}
+
+# Lists: Game.ini keys that REPEAT (one line per entry), so they cannot go through the one-value-per-key
+# path. The panel keeps typed entries in settings.json ("lists"); `apply` writes every line of a key it
+# manages (and only of those) and renders them itself: raw line text is never accepted. Syntax from
+# ark.wiki.gg/wiki/Server_configuration. Not here: the ones that depend on order
+# (LevelExperienceRampOverrides, OverridePlayerLevelEngramPoints) and the deeply nested ones
+# (supply crates, crafting costs, spawn containers).
+# field: (name, kind, required, low, high)   kind: class = quoted class name, tag = bare name, int, float, bool
+CLASS_RE = re.compile(r"^[A-Za-z0-9_]{1,120}$")
+
+
+def _mult(cls_field="className"):
+    return [(cls_field, "class", True, None, None), ("multiplier", "float", True, 0, 1000)]
+
+
+LISTS = {
+    "itemMaxQuantity": ("ConfigOverrideItemMaxQuantity", [("className", "class", True, None, None), ("maxQuantity", "int", True, 1, 2000000000), ("ignoreMultiplier", "bool", False, None, None)],
+                        lambda e: f'(ItemClassString="{e["className"]}",Quantity=(MaxItemQuantity={e["maxQuantity"]},bIgnoreMultiplier={"True" if e.get("ignoreMultiplier") else "False"}))'),
+    "engramAutoUnlock": ("EngramEntryAutoUnlocks", [("className", "class", True, None, None), ("level", "int", True, 0, 1000)],
+                         lambda e: f'(EngramClassName="{e["className"]}",LevelToAutoUnlock={e["level"]})'),
+    "engramOverride": ("OverrideNamedEngramEntries", [("className", "class", True, None, None), ("hidden", "bool", False, None, None), ("pointsCost", "int", False, 0, 100000), ("levelRequirement", "int", False, 0, 1000), ("removePrereq", "bool", False, None, None)],
+                       lambda e: f'(EngramClassName="{e["className"]}"' + "".join(f",{k}={v}" for k, v in (
+                           ("EngramHidden", "True" if e.get("hidden") else "False") if "hidden" in e else (None, None),
+                           ("EngramPointsCost", e.get("pointsCost")) if "pointsCost" in e else (None, None),
+                           ("EngramLevelRequirement", e.get("levelRequirement")) if "levelRequirement" in e else (None, None),
+                           ("RemoveEngramPreReq", "True" if e.get("removePrereq") else "False") if "removePrereq" in e else (None, None)) if k) + ")"),
+    "dinoDamage": ("DinoClassDamageMultipliers", _mult(), lambda e: f'(ClassName="{e["className"]}",Multiplier={e["multiplier"]})'),
+    "tamedDinoDamage": ("TamedDinoClassDamageMultipliers", _mult(), lambda e: f'(ClassName="{e["className"]}",Multiplier={e["multiplier"]})'),
+    "dinoResistance": ("DinoClassResistanceMultipliers", _mult(), lambda e: f'(ClassName="{e["className"]}",Multiplier={e["multiplier"]})'),
+    "tamedDinoResistance": ("TamedDinoClassResistanceMultipliers", _mult(), lambda e: f'(ClassName="{e["className"]}",Multiplier={e["multiplier"]})'),
+    "tamedDinoSpeed": ("TamedDinoClassSpeedMultipliers", _mult(), lambda e: f'(ClassName="{e["className"]}",Multiplier={e["multiplier"]})'),
+    "tamedDinoStamina": ("TamedDinoClassStaminaMultipliers", _mult(), lambda e: f'(ClassName="{e["className"]}",Multiplier={e["multiplier"]})'),
+    "harvestResource": ("HarvestResourceItemAmountClassMultipliers", _mult(), lambda e: f'(ClassName="{e["className"]}",Multiplier={e["multiplier"]})'),
+    "spawnWeight": ("DinoSpawnWeightMultipliers", [("className", "class", True, None, None), ("weight", "float", False, 0, 1000), ("limitPercent", "float", False, 0, 100)],
+                    lambda e: f'(DinoNameTag={e["className"]}' + (f',SpawnWeightMultiplier={e["weight"]}' if "weight" in e else "")
+                    + (f',OverrideSpawnLimitPercentage=True,SpawnLimitPercentage={e["limitPercent"]}' if "limitPercent" in e else "") + ")"),
+    "npcReplacement": ("NPCReplacements", [("fromClass", "class", True, None, None), ("toClass", "class", True, None, None)],
+                       lambda e: f'(FromClassName="{e["fromClass"]}",ToClassName="{e["toClass"]}")'),
+    "preventBreeding": ("PreventBreedingForClassNames", [("className", "class", True, None, None)], lambda e: f'"{e["className"]}"'),
+    "preventTaming": ("PreventDinoTameClassNames", [("className", "class", True, None, None)], lambda e: f'"{e["className"]}"'),
+    "preventTransfer": ("PreventTransferForClassNames", [("className", "class", True, None, None)], lambda e: f'"{e["className"]}"'),
+}
+LIST_MAX_ENTRIES = 300
+
+
+def coerce_list(name, entries):
+    """The typed entries of one list, checked: (clean entries, or raises ValueError)."""
+    _, fields, _ = LISTS[name]
+    if not isinstance(entries, list):
+        raise ValueError(f"{name} must be a list")
+    if len(entries) > LIST_MAX_ENTRIES:
+        raise ValueError(f"{name}: at most {LIST_MAX_ENTRIES} entries")
+    clean, seen = [], set()
+    for n, entry in enumerate(entries, 1):
+        if not isinstance(entry, dict):
+            raise ValueError(f"{name} #{n}: not an entry")
+        out = {}
+        for fname, kind, required, lo, hi in fields:
+            if entry.get(fname) in (None, ""):
+                if required:
+                    raise ValueError(f"{name} #{n}: {fname} is needed")
+                continue
+            v = entry[fname]
+            if kind == "class":
+                if not isinstance(v, str) or not CLASS_RE.match(v.strip()):
+                    raise ValueError(f"{name} #{n}: {fname} must be a class name (letters, digits and _ only)")
+                out[fname] = v.strip()
+            elif kind == "bool":
+                out[fname] = v is True or str(v).lower() in ("1", "true", "yes", "on")
+            else:
+                try:
+                    x = float(str(v).strip())
+                except ValueError:
+                    raise ValueError(f"{name} #{n}: {fname} must be a number") from None
+                if not lo <= x <= hi:
+                    raise ValueError(f"{name} #{n}: {fname} must be from {lo} to {hi}")
+                if kind == "int":
+                    if x != int(x):
+                        raise ValueError(f"{name} #{n}: {fname} must be a whole number")
+                    x = int(x)
+                out[fname] = x
+        if name == "engramOverride" and len(out) == 1:
+            raise ValueError(f"{name} #{n}: set at least one thing to change for {out['className']}")
+        key = out[fields[0][0]].lower() + (":" + out[fields[1][0]].lower() if name == "npcReplacement" else "")
+        if key in seen:
+            raise ValueError(f"{name}: {out[fields[0][0]]} is listed twice (the game wants each once)")
+        seen.add(key)
+        clean.append(out)
+    return clean
+
+
+def list_lines(settings=None):
+    """{ini key: [rendered lines]} for every list the panel manages (an empty list deletes the key's lines)."""
+    settings = load(SETTINGS_FILE) if settings is None else settings
+    lists = settings.get("lists") if isinstance(settings.get("lists"), dict) else {}
+    out = {}
+    for name, entries in lists.items():
+        if name not in LISTS:
+            continue
+        try:
+            clean = coerce_list(name, entries)
+        except ValueError:
+            continue
+        out[LISTS[name][0]] = [LISTS[name][2](e) for e in clean]
+    return out
+
+EXTRA_ARG_RE = re.compile(r"^-([A-Za-z][A-Za-z0-9_]{0,63})(?:=([A-Za-z0-9_.,:+@/-]{0,200}))?$")
 ENV = {
     "ASE_SESSION_NAME": "sessionName", "ASE_MAX_PLAYERS": "maxPlayers", "ASE_PASSWORD": "password",
     "ASE_PVE": "pve", "ASE_XP": "xp", "ASE_TAMING": "taming", "ASE_HARVEST": "harvest",
@@ -210,8 +349,11 @@ def coerce(name, value):
             n = float(str(value).strip())
         except ValueError:
             raise ValueError(f"{name} must be a number") from None
-        if not 0 <= n <= limit or (name == "maxPlayers" and n < 1):
-            raise ValueError(f"{name} must be from {1 if name == 'maxPlayers' else 0} to {limit}")
+        lo = MINS.get(name, 1 if name == "maxPlayers" else 0)
+        if not lo <= n <= limit:
+            raise ValueError(f"{name} must be from {lo} to {limit}")
+        if kind == "int" and n != int(n):
+            raise ValueError(f"{name} must be a whole number")
         return int(n) if kind == "int" else n
     text = re.sub(r"[\x00-\x1f\x7f]", " ", str(value)).strip()
     if name in ("password", "sessionName") and "?" in text:
@@ -236,6 +378,76 @@ def effective(settings=None):
     return values, sources
 
 
+def parse_extra_args(text):
+    """The free-text launch flags: (flags, errors). One flag per whitespace-separated token, each
+    '-Name' or '-Name=value' in a plain character set (no quotes, no '?', no shell). The ones the
+    image owns are refused with the reason, so a typo or a clash is said, not silently ignored."""
+    flags, errors, seen = [], [], set()
+    for token in str(text or "").split():
+        m = EXTRA_ARG_RE.match(token)
+        if not m:
+            errors.append(f"{token}: a launch flag looks like -Name or -Name=value (letters, digits and . , : _ + @ / - only)")
+            continue
+        name = m.group(1).lower()
+        if name in OWNED_FLAGS:
+            errors.append(f"{token}: the server sets -{m.group(1)} itself (map, ports, mods and cross-play have their own settings)")
+            continue
+        if name in seen:
+            continue
+        seen.add(name)
+        flags.append(token)
+    return flags, errors
+
+
+def coerce_launch(name, value):
+    flag, kind, limit = LAUNCH[name]
+    if kind == "bool":
+        if isinstance(value, bool):
+            return value
+        v = str(value).strip().lower()
+        if v in ("1", "true", "yes", "on"):
+            return True
+        if v in ("0", "false", "no", "off", ""):
+            return False
+        raise ValueError(f"{name} must be true or false")
+    text = str(value).strip()
+    if kind == "word":
+        if not re.fullmatch(r"[A-Za-z0-9_-]{1,%d}" % limit, text):
+            raise ValueError(f"{name} must be letters, digits, - or _ (at most {limit})")
+        return text
+    try:
+        n = float(text)
+    except ValueError:
+        raise ValueError(f"{name} must be a number") from None
+    if not 0 <= n <= limit:
+        raise ValueError(f"{name} must be from 0 to {limit}")
+    return int(n) if kind == "int" else n
+
+
+def launch_args(settings=None):
+    """Every launch flag the panel has switched on, as the ARG list `apply` prints: the known options
+    in table order, then the free-text ones the owner added (an option set both ways keeps the table's)."""
+    settings = load(SETTINGS_FILE) if settings is None else settings
+    chosen = settings.get("launch") if isinstance(settings.get("launch"), dict) else {}
+    args = []
+    for name, (flag, kind, _) in LAUNCH.items():
+        if name not in chosen:
+            continue
+        try:
+            value = coerce_launch(name, chosen[name])
+        except ValueError:
+            continue
+        if kind == "bool":
+            if value:
+                args.append(flag)
+        elif value != "":
+            args.append(f"{flag}={value}")
+    known = {a.split("=", 1)[0].lower() for a in args}
+    extra, _ = parse_extra_args(settings.get("extraArgs", ""))
+    args += [a for a in extra if a.split("=", 1)[0].lower() not in known]
+    return args
+
+
 # ------------------------------------------------------------------------------------------------
 # ini files: our keys set, every other line kept (the server writes these files too)
 # ------------------------------------------------------------------------------------------------
@@ -249,16 +461,28 @@ def ini_value(kind, value):
 
 
 def set_ini(text, changes):
-    """changes: {section: {key: value}}. Replaces a key's line in its section (case-insensitively,
-    as Unreal reads it), appends it to the section, or adds the section."""
+    """changes: {section: {key: value}}; a value of None deletes the key's line (back to the game's own default). Replaces a key's line in its section (section and key names
+    case-insensitively, as Unreal reads them: people write both [/Script/ShooterGame.ShooterGameMode]
+    and [/script/shootergame.shootergamemode]), appends it to the section, or adds the section."""
+    by_lower = {sec.lower(): sec for sec in changes}
+
+    def emit(key, value):
+        """The lines of one key: None none (deleted), a list one line per entry (a repeated key), else one."""
+        if value is None:
+            return []
+        if isinstance(value, list):
+            return [f"{key}={v}" for v in value]
+        return [f"{key}={value}"]
+
     lines = text.splitlines()
     out_lines, section, done = [], None, set()
 
     def flush(sec):
-        for key, value in changes.get(sec, {}).items():
-            if (sec, key.lower()) not in done:
-                out_lines.append(f"{key}={value}")
-                done.add((sec, key.lower()))
+        key_sec = by_lower.get(sec.lower())
+        for key, value in changes.get(key_sec, {}).items():
+            if (key_sec, key.lower()) not in done:
+                out_lines.extend(emit(key, value))
+                done.add((key_sec, key.lower()))
 
     for line in lines:
         m = re.match(r"^\s*\[(.+)\]\s*$", line)
@@ -268,22 +492,24 @@ def set_ini(text, changes):
             section = m.group(1)
             out_lines.append(line)
             continue
-        if section in changes and "=" in line:
+        key_sec = by_lower.get(section.lower()) if section is not None else None
+        if key_sec and "=" in line:
             key = line.split("=", 1)[0].strip()
-            match = next((k for k in changes[section] if k.lower() == key.lower()), None)
+            match = next((k for k in changes[key_sec] if k.lower() == key.lower()), None)
             if match:
-                if (section, match.lower()) not in done:
-                    out_lines.append(f"{match}={changes[section][match]}")
-                    done.add((section, match.lower()))
+                if (key_sec, match.lower()) not in done:
+                    out_lines.extend(emit(match, changes[key_sec][match]))
+                    done.add((key_sec, match.lower()))
                 continue
         out_lines.append(line)
     if section is not None:
         flush(section)
     for sec, keys in changes.items():
-        pending = {k: v for k, v in keys.items() if (sec, k.lower()) not in done}
+        pending = {k: v for k, v in keys.items() if (sec, k.lower()) not in done and v is not None and v != []}
         if pending:
             out_lines.append(f"[{sec}]")
-            out_lines += [f"{k}={v}" for k, v in pending.items()]
+            for k, v in pending.items():
+                out_lines.extend(emit(k, v))
             out_lines.append("")
     return "\n".join(out_lines).rstrip("\n") + "\n"
 
@@ -302,9 +528,21 @@ def ini_get(text, section, key):
         m = re.match(r"^\s*\[(.+)\]\s*$", line)
         if m:
             current = m.group(1)
-        elif current == section and "=" in line and line.split("=", 1)[0].strip().lower() == key.lower():
+        elif current is not None and current.lower() == section.lower() and "=" in line and line.split("=", 1)[0].strip().lower() == key.lower():
             return line.split("=", 1)[1].strip()
     return None
+
+
+def ini_get_all(text, section, key):
+    """Every value of a repeated key in a section."""
+    found, current = [], None
+    for line in text.splitlines():
+        m = re.match(r"^\s*\[(.+)\]\s*$", line)
+        if m:
+            current = m.group(1)
+        elif current is not None and current.lower() == section.lower() and "=" in line and line.split("=", 1)[0].strip().lower() == key.lower():
+            found.append(line.split("=", 1)[1].strip())
+    return found
 
 
 def admin_password():
@@ -448,6 +686,16 @@ def cmd_apply():
     for name, value in values.items():
         file, section, key, kind, _ = SETTINGS[name]
         changes[file].setdefault(section, {})[key] = ini_value(kind, value)
+    # Settings the owner sent back to the game's default: their line is deleted from the ini (once).
+    settings_now = load(SETTINGS_FILE)
+    for name in settings_now.get("reset", []):
+        if name in SETTINGS and name not in values:
+            file, section, key, _, _ = SETTINGS[name]
+            changes[file].setdefault(section, {})[key] = None
+    # The lists the panel manages (one ini key, many lines): every line of those keys is ours; keys it
+    # never touched keep the owner's own lines.
+    for ini_key, lines in list_lines(settings_now).items():
+        changes["game"].setdefault(MODE, {})[ini_key] = lines
     mods = active_mods()
     mid = mod_map_id()
     if mid and mid not in mods:
@@ -462,6 +710,18 @@ def cmd_apply():
     write_text(GAME_INI, set_ini(read_ini(GAME_INI), changes["game"]) if changes["game"] else (read_ini(GAME_INI) or "\n"),
                mode=INI_MODE)
     open_config()
+    spent = bool(settings_now.get("reset"))
+    settings_now.pop("reset", None)
+    if isinstance(settings_now.get("lists"), dict):
+        # An emptied list has deleted its lines; there is nothing left to manage.
+        kept = {k: v for k, v in settings_now["lists"].items() if v}
+        spent = spent or kept != settings_now["lists"]
+        if kept:
+            settings_now["lists"] = kept
+        else:
+            settings_now.pop("lists")
+    if spent:
+        write_json(SETTINGS_FILE, settings_now)
     state = read_json(STATE_FILE, {}) or {}
     state.update({"applied": int(time.time()) + 1, "map": map_name(), "modMap": mid, "saveFolder": save_folder()})
     write_json(STATE_FILE, state, indent=None)
@@ -489,6 +749,8 @@ def cmd_apply():
     print("?".join(url))
     if mid:
         print(f"ARG -MapModID={mid}")
+    for flag in launch_args():
+        print(f"ARG {flag}")
     # Transfers between THIS server's maps (obelisk upload/download): a cluster of one server, its
     # folder on the data volume. Off unless the owner turns it on in the Map tab.
     if load(SETTINGS_FILE).get("mapTransfers") is True:
@@ -860,7 +1122,13 @@ def cmd_settings():
          "map": map_name(), "mapSource": map_source(), "maps": {k: {"name": v[0], "dlc": v[1]} for k, v in MAPS.items()},
          "modMap": mod_map_id(), "mapTransfers": load(SETTINGS_FILE).get("mapTransfers") is True,
          "joinPassword": values.get("password") if "password" in values else (ini_get(gus, SS, "ServerPassword") or ""),
-         "adminPassword": admin_password(), "env": {k: v for k, v in ENV.items() if k in os.environ}})
+         "adminPassword": admin_password(), "env": {k: v for k, v in ENV.items() if k in os.environ},
+         "launch": (load(SETTINGS_FILE).get("launch") if isinstance(load(SETTINGS_FILE).get("launch"), dict) else {}),
+         "extraArgs": str(load(SETTINGS_FILE).get("extraArgs", "")),
+         "launchOptions": {k: v[0] for k, v in LAUNCH.items()}, "ownedFlags": sorted(OWNED_FLAGS),
+         "lists": (load(SETTINGS_FILE).get("lists") if isinstance(load(SETTINGS_FILE).get("lists"), dict) else {}),
+         "listSchemas": {n: {"ini": ini, "fields": [{"name": f[0], "kind": f[1], "required": f[2], "min": f[3], "max": f[4]} for f in fields]} for n, (ini, fields, _) in LISTS.items()},
+         "listLinesInFile": {n: len(ini_get_all(game, MODE, ini)) for n, (ini, _, _) in LISTS.items()}})
 
 
 def cmd_set_settings(raw):
@@ -892,12 +1160,64 @@ def cmd_set_settings(raw):
         if name == "mapTransfers":
             settings["mapTransfers"] = value is True or str(value).lower() in ("1", "true", "yes", "on")
             continue
+        if name == "launch":
+            if not isinstance(value, dict):
+                errors.append("launch must be an object")
+                continue
+            launch = settings.get("launch") if isinstance(settings.get("launch"), dict) else {}
+            for lname, lvalue in value.items():
+                if lname not in LAUNCH:
+                    errors.append(f"unknown launch option {lname}")
+                elif lvalue is None:
+                    launch.pop(lname, None)
+                else:
+                    try:
+                        launch[lname] = coerce_launch(lname, lvalue)
+                    except ValueError as e:
+                        errors.append(str(e))
+            if launch:
+                settings["launch"] = launch
+            else:
+                settings.pop("launch", None)
+            continue
+        if name == "lists":
+            if not isinstance(value, dict):
+                errors.append("lists must be an object")
+                continue
+            lists = settings.get("lists") if isinstance(settings.get("lists"), dict) else {}
+            for lname, entries in value.items():
+                if lname not in LISTS:
+                    errors.append(f"unknown list {lname}")
+                    continue
+                try:
+                    lists[lname] = coerce_list(lname, entries)
+                except ValueError as e:
+                    errors.append(str(e))
+            if lists:
+                settings["lists"] = lists
+            continue
+        if name == "extraArgs":
+            flags, bad = parse_extra_args(value)
+            errors += bad
+            if flags:
+                settings["extraArgs"] = " ".join(flags)
+            else:
+                settings.pop("extraArgs", None)
+            continue
         if name not in SETTINGS:
             errors.append(f"unknown setting {name}")
             continue
+        resets = [r for r in settings.get("reset", []) if r != name]
         if value is None:
             settings.pop(name, None)
+            if name != "password":
+                resets.append(name)
+            settings["reset"] = resets
             continue
+        if resets:
+            settings["reset"] = resets
+        else:
+            settings.pop("reset", None)
         try:
             settings[name] = coerce(name, value)
         except ValueError as e:

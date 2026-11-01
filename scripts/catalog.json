@@ -1,0 +1,3397 @@
+{
+ "groups": [
+  {
+   "id": "rates",
+   "title": "Rates",
+   "hint": "How fast everything goes. 1 is the official servers' pace."
+  },
+  {
+   "id": "difficulty",
+   "title": "Difficulty & Wild Dinos",
+   "hint": "Wild creature levels, how many there are, and loot."
+  },
+  {
+   "id": "dinos",
+   "title": "Tamed Dinos",
+   "hint": "What your tames can do, and their limits."
+  },
+  {
+   "id": "breeding",
+   "title": "Breeding",
+   "hint": "Lower interval = more often; higher speed = faster."
+  },
+  {
+   "id": "survival",
+   "title": "Players & Survival",
+   "hint": "The players' side of the island."
+  },
+  {
+   "id": "pvp",
+   "title": "PvE / PvP & Combat",
+   "hint": "Who can fight whom, and the damage rules."
+  },
+  {
+   "id": "building",
+   "title": "Structures & Building",
+   "hint": "Limits, decay and pick-up rules for bases."
+  },
+  {
+   "id": "tribes",
+   "title": "Tribes",
+   "hint": "Tribe size, alliances and merging."
+  },
+  {
+   "id": "world",
+   "title": "World & Time",
+   "hint": "The clock, saves and idle players."
+  },
+  {
+   "id": "players",
+   "title": "Chat & HUD",
+   "hint": "What players see, and the welcome message."
+  },
+  {
+   "id": "transfers",
+   "title": "Cross-ARK Transfers",
+   "hint": "Uploads and downloads between maps and servers."
+  },
+  {
+   "id": "crafting",
+   "title": "Crafting, Cryopods & Engrams",
+   "hint": "Recipes, cryopods and engram rules."
+  },
+  {
+   "id": "genesis",
+   "title": "Genesis",
+   "hint": "Only used on Genesis: Part 1."
+  },
+  {
+   "id": "stats",
+   "title": "Stats Per Level",
+   "hint": "How much each level point adds, for players, wild dinos, tames and mutagens. 0 is read by the game as 1, so 0.01 is the lowest."
+  }
+ ],
+ "settings": [
+  {
+   "key": "xp",
+   "file": "gus",
+   "ini": "XPMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "rates",
+   "label": "XP",
+   "min": 0.1,
+   "max": 1000,
+   "help": "Experience from everything."
+  },
+  {
+   "key": "taming",
+   "file": "gus",
+   "ini": "TamingSpeedMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "rates",
+   "label": "Taming Speed",
+   "min": 0.1,
+   "max": 1000
+  },
+  {
+   "key": "harvest",
+   "file": "gus",
+   "ini": "HarvestAmountMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "rates",
+   "label": "Harvest Amount",
+   "min": 0.1,
+   "max": 1000
+  },
+  {
+   "key": "harvestHealth",
+   "file": "gus",
+   "ini": "HarvestHealthMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "rates",
+   "label": "Harvest Health",
+   "min": 0.1,
+   "max": 1000,
+   "help": "How much damage trees and rocks take before they break."
+  },
+  {
+   "key": "stackSize",
+   "file": "gus",
+   "ini": "ItemStackSizeMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "rates",
+   "label": "Item Stack Size",
+   "min": 1,
+   "max": 1000,
+   "help": "How many of an item fit in one slot."
+  },
+  {
+   "key": "resourceRespawn",
+   "file": "gus",
+   "ini": "ResourcesRespawnPeriodMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "rates",
+   "label": "Resource Respawn Period",
+   "min": 0.1,
+   "max": 100,
+   "help": "Lower makes resources grow back sooner."
+  },
+  {
+   "key": "harvestXp",
+   "file": "game",
+   "ini": "HarvestXPMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "rates",
+   "label": "XP From Harvesting",
+   "min": 0,
+   "max": 1000
+  },
+  {
+   "key": "killXp",
+   "file": "game",
+   "ini": "KillXPMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "rates",
+   "label": "XP From Kills",
+   "min": 0,
+   "max": 1000
+  },
+  {
+   "key": "craftXp",
+   "file": "game",
+   "ini": "CraftXPMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "rates",
+   "label": "XP From Crafting",
+   "min": 0,
+   "max": 1000
+  },
+  {
+   "key": "genericXp",
+   "file": "game",
+   "ini": "GenericXPMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "rates",
+   "label": "XP From Generic Actions",
+   "min": 0,
+   "max": 1000
+  },
+  {
+   "key": "specialXp",
+   "file": "game",
+   "ini": "SpecialXPMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "rates",
+   "label": "XP From Special Events",
+   "min": 0,
+   "max": 1000
+  },
+  {
+   "key": "optimizedHarvest",
+   "file": "gus",
+   "ini": "UseOptimizedHarvestingHealth",
+   "kind": "bool",
+   "official": false,
+   "group": "rates",
+   "label": "Optimised Harvest Health",
+   "help": "Helps when the Harvest Amount is very high."
+  },
+  {
+   "key": "difficulty",
+   "file": "gus",
+   "ini": "OverrideOfficialDifficulty",
+   "kind": "float",
+   "official": 5,
+   "group": "difficulty",
+   "label": "Difficulty",
+   "min": 1,
+   "max": 100,
+   "help": "5 = wild dinos up to level 150 (official), 1 = up to level 30."
+  },
+  {
+   "key": "dinoCount",
+   "file": "gus",
+   "ini": "DinoCountMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "difficulty",
+   "label": "Wild Dino Count",
+   "min": 0,
+   "max": 100
+  },
+  {
+   "key": "dinoDamage",
+   "file": "gus",
+   "ini": "DinoDamageMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "difficulty",
+   "label": "Wild Dino Damage",
+   "min": 0,
+   "max": 100
+  },
+  {
+   "key": "dinoResistance",
+   "file": "gus",
+   "ini": "DinoResistanceMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "difficulty",
+   "label": "Wild Dino Resistance",
+   "min": 0,
+   "max": 100,
+   "help": "Damage wild dinos take (higher = they take more)."
+  },
+  {
+   "key": "wildFood",
+   "file": "game",
+   "ini": "WildDinoCharacterFoodDrainMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "difficulty",
+   "label": "Wild Dino Food Drain",
+   "min": 0,
+   "max": 100
+  },
+  {
+   "key": "wildTorpor",
+   "file": "game",
+   "ini": "WildDinoTorporDrainMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "difficulty",
+   "label": "Wild Dino Torpor Drain",
+   "min": 0,
+   "max": 100,
+   "help": "How fast knocked-out wild dinos wake up."
+  },
+  {
+   "key": "respawnWildInterval",
+   "file": "gus",
+   "ini": "ServerAutoForceRespawnWildDinosInterval",
+   "kind": "float",
+   "official": 0,
+   "group": "difficulty",
+   "label": "Force Wild Respawn Every (seconds)",
+   "min": 0,
+   "max": 31536000,
+   "help": "Wild dinos respawn on a restart after this many seconds. 0 turns it off."
+  },
+  {
+   "key": "fishingQuality",
+   "file": "game",
+   "ini": "FishingLootQualityMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "difficulty",
+   "label": "Fishing Loot Quality",
+   "min": 1,
+   "max": 5,
+   "help": "1 to 5."
+  },
+  {
+   "key": "supplyQuality",
+   "file": "game",
+   "ini": "SupplyCrateLootQualityMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "difficulty",
+   "label": "Supply Crate Loot Quality",
+   "min": 1,
+   "max": 100
+  },
+  {
+   "key": "disableLootCrates",
+   "file": "game",
+   "ini": "bDisableLootCrates",
+   "kind": "bool",
+   "official": false,
+   "group": "difficulty",
+   "label": "Disable Loot Crates",
+   "help": "Artifact crates still spawn."
+  },
+  {
+   "key": "randomSupplyPoints",
+   "file": "gus",
+   "ini": "RandomSupplyCratePoints",
+   "kind": "bool",
+   "official": false,
+   "group": "difficulty",
+   "label": "Random Supply Drop Points",
+   "help": "Can hide Ragnarok artifacts."
+  },
+  {
+   "key": "disableWeatherFog",
+   "file": "gus",
+   "ini": "DisableWeatherFog",
+   "kind": "bool",
+   "official": false,
+   "group": "difficulty",
+   "label": "Disable Fog"
+  },
+  {
+   "key": "baseTemperature",
+   "file": "game",
+   "ini": "BaseTemperatureMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "difficulty",
+   "label": "Base Temperature",
+   "min": 0,
+   "max": 100
+  },
+  {
+   "key": "tamedDamage",
+   "file": "gus",
+   "ini": "TamedDinoDamageMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "dinos",
+   "label": "Tamed Dino Damage",
+   "min": 0,
+   "max": 100
+  },
+  {
+   "key": "tamedResistance",
+   "file": "gus",
+   "ini": "TamedDinoResistanceMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "dinos",
+   "label": "Tamed Dino Resistance",
+   "min": 0,
+   "max": 100,
+   "help": "Damage tames take (lower = tougher)."
+  },
+  {
+   "key": "tamedFood",
+   "file": "game",
+   "ini": "TamedDinoCharacterFoodDrainMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "dinos",
+   "label": "Tamed Dino Food Drain",
+   "min": 0,
+   "max": 100
+  },
+  {
+   "key": "tamedTorpor",
+   "file": "game",
+   "ini": "TamedDinoTorporDrainMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "dinos",
+   "label": "Tamed Dino Torpor Drain",
+   "min": 0,
+   "max": 100
+  },
+  {
+   "key": "dinoFoodDrain",
+   "file": "gus",
+   "ini": "DinoCharacterFoodDrainMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "dinos",
+   "label": "Dino Food Consumption",
+   "min": 0,
+   "max": 100,
+   "help": "All dinos."
+  },
+  {
+   "key": "dinoStamina",
+   "file": "gus",
+   "ini": "DinoCharacterStaminaDrainMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "dinos",
+   "label": "Dino Stamina Consumption",
+   "min": 0,
+   "max": 100
+  },
+  {
+   "key": "dinoHealthRecovery",
+   "file": "gus",
+   "ini": "DinoCharacterHealthRecoveryMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "dinos",
+   "label": "Dino Health Recovery",
+   "min": 0,
+   "max": 100
+  },
+  {
+   "key": "maxTamedDinos",
+   "file": "gus",
+   "ini": "MaxTamedDinos",
+   "kind": "int",
+   "official": 5000,
+   "group": "dinos",
+   "label": "Max Tamed Dinos",
+   "min": 0,
+   "max": 100000,
+   "help": "For the whole server."
+  },
+  {
+   "key": "maxPersonalTamed",
+   "file": "gus",
+   "ini": "MaxPersonalTamedDinos",
+   "kind": "int",
+   "official": 0,
+   "group": "dinos",
+   "label": "Max Tamed Dinos Per Tribe",
+   "min": 0,
+   "max": 100000,
+   "help": "0 = no per-tribe limit."
+  },
+  {
+   "key": "dinoHarvestDamage",
+   "file": "game",
+   "ini": "DinoHarvestingDamageMultiplier",
+   "kind": "float",
+   "official": 3.2,
+   "group": "dinos",
+   "label": "Dino Harvesting Damage",
+   "min": 0,
+   "max": 1000,
+   "help": "How well tames gather."
+  },
+  {
+   "key": "playerHarvestDamage",
+   "file": "game",
+   "ini": "PlayerHarvestingDamageMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "dinos",
+   "label": "Player Harvesting Damage",
+   "min": 0,
+   "max": 1000
+  },
+  {
+   "key": "turretDinoDamage",
+   "file": "game",
+   "ini": "DinoTurretDamageMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "dinos",
+   "label": "Turret Damage To Dinos",
+   "min": 0,
+   "max": 1000
+  },
+  {
+   "key": "disableDinoDecay",
+   "file": "gus",
+   "ini": "DisableDinoDecayPvE",
+   "kind": "bool",
+   "official": false,
+   "group": "dinos",
+   "label": "No Dino Decay (PvE)",
+   "help": "Unclaimed PvE tames never disappear."
+  },
+  {
+   "key": "pveDinoDecay",
+   "file": "gus",
+   "ini": "PvEDinoDecayPeriodMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "dinos",
+   "label": "PvE Dino Decay Period",
+   "min": 0,
+   "max": 1000,
+   "help": "Needs No Dino Decay (PvE) off."
+  },
+  {
+   "key": "autoDestroyDecayed",
+   "file": "gus",
+   "ini": "AutoDestroyDecayedDinos",
+   "kind": "bool",
+   "official": false,
+   "group": "dinos",
+   "label": "Auto-Destroy Decayed Dinos",
+   "help": "Claimable decayed tames are removed on load."
+  },
+  {
+   "key": "destroyOverLevel",
+   "file": "game",
+   "ini": "DestroyTamesOverLevelClamp",
+   "kind": "int",
+   "official": 0,
+   "group": "dinos",
+   "label": "Destroy Tames Above Level",
+   "min": 0,
+   "max": 100000,
+   "help": "Tames above this level are deleted on start. Official servers use 450."
+  },
+  {
+   "key": "allowUnclaim",
+   "file": "game",
+   "ini": "bAllowUnclaimDinos",
+   "kind": "bool",
+   "official": true,
+   "group": "dinos",
+   "label": "Allow Unclaiming Dinos"
+  },
+  {
+   "key": "disableTaming",
+   "file": "game",
+   "ini": "bDisableDinoTaming",
+   "kind": "bool",
+   "official": false,
+   "group": "dinos",
+   "label": "Disable Taming"
+  },
+  {
+   "key": "disableRiding",
+   "file": "game",
+   "ini": "bDisableDinoRiding",
+   "kind": "bool",
+   "official": false,
+   "group": "dinos",
+   "label": "Disable Riding"
+  },
+  {
+   "key": "disableBreeding",
+   "file": "game",
+   "ini": "bDisableDinoBreeding",
+   "kind": "bool",
+   "official": false,
+   "group": "dinos",
+   "label": "Disable Breeding"
+  },
+  {
+   "key": "allowRaidFeeding",
+   "file": "gus",
+   "ini": "AllowRaidDinoFeeding",
+   "kind": "bool",
+   "official": false,
+   "group": "dinos",
+   "label": "Titans Can Be Tamed",
+   "help": "Allows permanently taming Titanosaurs."
+  },
+  {
+   "key": "raidFood",
+   "file": "gus",
+   "ini": "RaidDinoCharacterFoodDrainMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "dinos",
+   "label": "Titan Food Drain",
+   "min": 0,
+   "max": 100
+  },
+  {
+   "key": "flyerSpeedLeveling",
+   "file": "game",
+   "ini": "bAllowFlyerSpeedLeveling",
+   "kind": "bool",
+   "official": false,
+   "group": "dinos",
+   "label": "Flyer Speed Leveling",
+   "help": "Lets players level movement speed on flyers."
+  },
+  {
+   "key": "flyerCarry",
+   "file": "gus",
+   "ini": "AllowFlyerCarryPvE",
+   "kind": "bool",
+   "official": false,
+   "group": "dinos",
+   "label": "Flyers Carry Wild Dinos In PvE"
+  },
+  {
+   "key": "flyingStamina",
+   "file": "gus",
+   "ini": "AllowFlyingStaminaRecovery",
+   "kind": "bool",
+   "official": false,
+   "group": "dinos",
+   "label": "Stamina Recovery While Flying"
+  },
+  {
+   "key": "preventMateBoost",
+   "file": "gus",
+   "ini": "PreventMateBoost",
+   "kind": "bool",
+   "official": false,
+   "group": "dinos",
+   "label": "Disable Mate Boosting"
+  },
+  {
+   "key": "fastCorpse",
+   "file": "game",
+   "ini": "UseCorpseLifeSpanMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "dinos",
+   "label": "Corpse Life Span",
+   "min": 0,
+   "max": 1000
+  },
+  {
+   "key": "mating",
+   "file": "game",
+   "ini": "MatingIntervalMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "breeding",
+   "label": "Mating Interval",
+   "min": 0.1,
+   "max": 100,
+   "help": "Lower is shorter between matings."
+  },
+  {
+   "key": "matingSpeed",
+   "file": "game",
+   "ini": "MatingSpeedMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "breeding",
+   "label": "Mating Speed",
+   "min": 0.1,
+   "max": 1000
+  },
+  {
+   "key": "eggHatch",
+   "file": "game",
+   "ini": "EggHatchSpeedMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "breeding",
+   "label": "Egg Hatch Speed",
+   "min": 0.1,
+   "max": 1000
+  },
+  {
+   "key": "babyMature",
+   "file": "game",
+   "ini": "BabyMatureSpeedMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "breeding",
+   "label": "Baby Mature Speed",
+   "min": 0.1,
+   "max": 1000
+  },
+  {
+   "key": "cuddleInterval",
+   "file": "game",
+   "ini": "BabyCuddleIntervalMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "breeding",
+   "label": "Baby Cuddle Interval",
+   "min": 0.1,
+   "max": 100,
+   "help": "Lower is more cuddles (imprinting) in the same time."
+  },
+  {
+   "key": "cuddleGrace",
+   "file": "game",
+   "ini": "BabyCuddleGracePeriodMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "breeding",
+   "label": "Cuddle Grace Period",
+   "min": 0,
+   "max": 100
+  },
+  {
+   "key": "cuddleLoseImprint",
+   "file": "game",
+   "ini": "BabyCuddleLoseImprintQualitySpeedMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "breeding",
+   "label": "Imprint Quality Loss Speed",
+   "min": 0,
+   "max": 100
+  },
+  {
+   "key": "babyFood",
+   "file": "game",
+   "ini": "BabyFoodConsumptionSpeedMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "breeding",
+   "label": "Baby Food Consumption",
+   "min": 0,
+   "max": 100
+  },
+  {
+   "key": "imprintAmount",
+   "file": "game",
+   "ini": "BabyImprintAmountMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "breeding",
+   "label": "Imprint Amount Per Cuddle",
+   "min": 0,
+   "max": 100
+  },
+  {
+   "key": "imprintScale",
+   "file": "game",
+   "ini": "BabyImprintingStatScaleMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "breeding",
+   "label": "Imprinting Stat Bonus",
+   "min": 0,
+   "max": 100,
+   "help": "0 turns the bonus off."
+  },
+  {
+   "key": "anyoneImprint",
+   "file": "gus",
+   "ini": "AllowAnyoneBabyImprintCuddle",
+   "kind": "bool",
+   "official": false,
+   "group": "breeding",
+   "label": "Anyone Can Cuddle Babies"
+  },
+  {
+   "key": "disableImprintBuff",
+   "file": "gus",
+   "ini": "DisableImprintDinoBuff",
+   "kind": "bool",
+   "official": false,
+   "group": "breeding",
+   "label": "Disable Imprint Rider Buff"
+  },
+  {
+   "key": "layEgg",
+   "file": "game",
+   "ini": "LayEggIntervalMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "breeding",
+   "label": "Egg Laying Interval",
+   "min": 0.1,
+   "max": 100
+  },
+  {
+   "key": "poop",
+   "file": "game",
+   "ini": "PoopIntervalMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "breeding",
+   "label": "Poop Interval",
+   "min": 0.1,
+   "max": 100
+  },
+  {
+   "key": "passiveTame",
+   "file": "game",
+   "ini": "PassiveTameIntervalMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "breeding",
+   "label": "Passive Tame Interval",
+   "min": 0.1,
+   "max": 100
+  },
+  {
+   "key": "foodDrain",
+   "file": "gus",
+   "ini": "PlayerCharacterFoodDrainMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "survival",
+   "label": "Player Food Drain",
+   "min": 0,
+   "max": 100
+  },
+  {
+   "key": "waterDrain",
+   "file": "gus",
+   "ini": "PlayerCharacterWaterDrainMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "survival",
+   "label": "Player Water Drain",
+   "min": 0,
+   "max": 100
+  },
+  {
+   "key": "staminaDrain",
+   "file": "gus",
+   "ini": "PlayerCharacterStaminaDrainMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "survival",
+   "label": "Player Stamina Drain",
+   "min": 0,
+   "max": 100
+  },
+  {
+   "key": "healthRecovery",
+   "file": "gus",
+   "ini": "PlayerCharacterHealthRecoveryMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "survival",
+   "label": "Player Health Recovery",
+   "min": 0,
+   "max": 100
+  },
+  {
+   "key": "playerDamage",
+   "file": "gus",
+   "ini": "PlayerDamageMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "survival",
+   "label": "Player Damage",
+   "min": 0,
+   "max": 100
+  },
+  {
+   "key": "playerResistance",
+   "file": "gus",
+   "ini": "PlayerResistanceMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "survival",
+   "label": "Player Resistance",
+   "min": 0,
+   "max": 100,
+   "help": "Damage players take (lower = tougher)."
+  },
+  {
+   "key": "swimSpeed",
+   "file": "gus",
+   "ini": "OxygenSwimSpeedStatMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "survival",
+   "label": "Swim Speed From Oxygen",
+   "min": 0,
+   "max": 100
+  },
+  {
+   "key": "maxFall",
+   "file": "game",
+   "ini": "MaxFallSpeedMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "survival",
+   "label": "Max Fall Speed",
+   "min": 0,
+   "max": 100,
+   "help": "Lower means less fall damage."
+  },
+  {
+   "key": "unlimitedRespecs",
+   "file": "game",
+   "ini": "bAllowUnlimitedRespecs",
+   "kind": "bool",
+   "official": false,
+   "group": "survival",
+   "label": "Unlimited Mindwipes",
+   "help": "Lets players use the Mindwipe Tonic an unlimited number of times (ARK's own description). It does not say that the 24 hour wait between uses goes away too, so players may still see that timer."
+  },
+  {
+   "key": "preventDiseases",
+   "file": "gus",
+   "ini": "PreventDiseases",
+   "kind": "bool",
+   "official": false,
+   "group": "survival",
+   "label": "No Diseases",
+   "help": "Disables Swamp Fever and the others."
+  },
+  {
+   "key": "nonPermanentDiseases",
+   "file": "gus",
+   "ini": "NonPermanentDiseases",
+   "kind": "bool",
+   "official": false,
+   "group": "survival",
+   "label": "Diseases Lost On Respawn"
+  },
+  {
+   "key": "spawnAnimations",
+   "file": "gus",
+   "ini": "PreventSpawnAnimations",
+   "kind": "bool",
+   "official": false,
+   "group": "survival",
+   "label": "Skip Wake-Up Animation"
+  },
+  {
+   "key": "hairGrowth",
+   "file": "game",
+   "ini": "HairGrowthSpeedMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "survival",
+   "label": "Hair Growth Speed",
+   "min": 0,
+   "max": 1000
+  },
+  {
+   "key": "cropGrowth",
+   "file": "game",
+   "ini": "CropGrowthSpeedMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "survival",
+   "label": "Crop Growth Speed",
+   "min": 0.1,
+   "max": 1000
+  },
+  {
+   "key": "cropDecay",
+   "file": "game",
+   "ini": "CropDecaySpeedMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "survival",
+   "label": "Crop Decay Speed",
+   "min": 0,
+   "max": 1000
+  },
+  {
+   "key": "fuelInterval",
+   "file": "game",
+   "ini": "FuelConsumptionIntervalMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "survival",
+   "label": "Fuel Consumption Interval",
+   "min": 0,
+   "max": 1000,
+   "help": "Higher makes fuel last longer."
+  },
+  {
+   "key": "spoiling",
+   "file": "game",
+   "ini": "GlobalSpoilingTimeMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "survival",
+   "label": "Spoiling Time",
+   "min": 0,
+   "max": 1000,
+   "help": "Higher keeps food fresh longer."
+  },
+  {
+   "key": "itemDecomp",
+   "file": "game",
+   "ini": "GlobalItemDecompositionTimeMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "survival",
+   "label": "Dropped Item Decomposition Time",
+   "min": 0,
+   "max": 1000
+  },
+  {
+   "key": "corpseDecomp",
+   "file": "game",
+   "ini": "GlobalCorpseDecompositionTimeMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "survival",
+   "label": "Corpse Decomposition Time",
+   "min": 0,
+   "max": 1000
+  },
+  {
+   "key": "maxTribeLogs",
+   "file": "game",
+   "ini": "MaxTribeLogs",
+   "kind": "int",
+   "official": 400,
+   "group": "survival",
+   "label": "Tribe Log Length",
+   "min": 0,
+   "max": 10000
+  },
+  {
+   "key": "pve",
+   "file": "gus",
+   "ini": "serverPVE",
+   "kind": "bool",
+   "official": false,
+   "group": "pvp",
+   "label": "PvE (players cannot attack each other)"
+  },
+  {
+   "key": "offlinePvP",
+   "file": "gus",
+   "ini": "PreventOfflinePvP",
+   "kind": "bool",
+   "official": false,
+   "group": "pvp",
+   "label": "Offline Raid Protection",
+   "help": "A tribe's structures cannot be damaged while all its members are offline."
+  },
+  {
+   "key": "offlinePvPInterval",
+   "file": "gus",
+   "ini": "PreventOfflinePvPInterval",
+   "kind": "float",
+   "official": 0,
+   "group": "pvp",
+   "label": "Offline Protection Delay (seconds)",
+   "min": 0,
+   "max": 86400,
+   "help": "How long after logging off the protection starts."
+  },
+  {
+   "key": "offlineInvincible",
+   "file": "game",
+   "ini": "PreventOfflinePvPConnectionInvincibleInterval",
+   "kind": "float",
+   "official": 5,
+   "group": "pvp",
+   "label": "Invincible After Connecting (seconds)",
+   "min": 0,
+   "max": 3600
+  },
+  {
+   "key": "pvpGamma",
+   "file": "gus",
+   "ini": "EnablePvPGamma",
+   "kind": "bool",
+   "official": false,
+   "group": "pvp",
+   "label": "Allow Gamma In PvP"
+  },
+  {
+   "key": "pveGamma",
+   "file": "gus",
+   "ini": "DisablePvEGamma",
+   "kind": "bool",
+   "official": false,
+   "group": "pvp",
+   "label": "Block Gamma In PvE"
+  },
+  {
+   "key": "friendlyFire",
+   "file": "game",
+   "ini": "bDisableFriendlyFire",
+   "kind": "bool",
+   "official": false,
+   "group": "pvp",
+   "label": "Disable Friendly Fire"
+  },
+  {
+   "key": "pveFriendlyFire",
+   "file": "game",
+   "ini": "bPvEDisableFriendlyFire",
+   "kind": "bool",
+   "official": false,
+   "group": "pvp",
+   "label": "Disable Friendly Fire (PvE)"
+  },
+  {
+   "key": "tribeAlliances",
+   "file": "gus",
+   "ini": "PreventTribeAlliances",
+   "kind": "bool",
+   "official": false,
+   "group": "pvp",
+   "label": "Disable Tribe Alliances"
+  },
+  {
+   "key": "tribeWarPvE",
+   "file": "game",
+   "ini": "bPvEAllowTribeWar",
+   "kind": "bool",
+   "official": true,
+   "group": "pvp",
+   "label": "Tribe War In PvE"
+  },
+  {
+   "key": "tribeWarCancel",
+   "file": "game",
+   "ini": "bPvEAllowTribeWarCancel",
+   "kind": "bool",
+   "official": false,
+   "group": "pvp",
+   "label": "Cancel Tribe War In PvE"
+  },
+  {
+   "key": "pvpRespawnInterval",
+   "file": "game",
+   "ini": "bIncreasePvPRespawnInterval",
+   "kind": "bool",
+   "official": true,
+   "group": "pvp",
+   "label": "Longer Respawn After Kills (PvP)"
+  },
+  {
+   "key": "pvpZoneDamage",
+   "file": "game",
+   "ini": "PvPZoneStructureDamageMultiplier",
+   "kind": "float",
+   "official": 6,
+   "group": "pvp",
+   "label": "Structure Damage In PvP Zones",
+   "min": 0,
+   "max": 1000
+  },
+  {
+   "key": "structureDamage",
+   "file": "gus",
+   "ini": "StructureDamageMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "pvp",
+   "label": "Structure Damage",
+   "min": 0,
+   "max": 100
+  },
+  {
+   "key": "structureResistance",
+   "file": "gus",
+   "ini": "StructureResistanceMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "pvp",
+   "label": "Structure Resistance",
+   "min": 0,
+   "max": 100,
+   "help": "Damage structures take (lower = tougher)."
+  },
+  {
+   "key": "noDecayPvE",
+   "file": "gus",
+   "ini": "DisableStructureDecayPvE",
+   "kind": "bool",
+   "official": false,
+   "group": "pvp",
+   "label": "No Structure Decay (PvE)",
+   "help": "Abandoned PvE structures are never auto-destroyed."
+  },
+  {
+   "key": "structureDecayPeriod",
+   "file": "gus",
+   "ini": "PvEStructureDecayPeriodMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "pvp",
+   "label": "Structure Decay Period",
+   "min": 0,
+   "max": 1000,
+   "help": "Higher decays slower."
+  },
+  {
+   "key": "pvpStructureDecay",
+   "file": "gus",
+   "ini": "PvPStructureDecay",
+   "kind": "bool",
+   "official": false,
+   "group": "pvp",
+   "label": "Structure Decay During Offline Protection"
+  },
+  {
+   "key": "pvpDinoDecay",
+   "file": "gus",
+   "ini": "PvPDinoDecay",
+   "kind": "bool",
+   "official": false,
+   "group": "pvp",
+   "label": "Dino Decay During Offline Protection"
+  },
+  {
+   "key": "hideDamageSource",
+   "file": "gus",
+   "ini": "AllowHideDamageSourceFromLogs",
+   "kind": "bool",
+   "official": true,
+   "group": "pvp",
+   "label": "Hide Damage Source In Tribe Logs",
+   "help": "Off shows who hit what."
+  },
+  {
+   "key": "tribeLogDestroyed",
+   "file": "gus",
+   "ini": "TribeLogDestroyedEnemyStructures",
+   "kind": "bool",
+   "official": false,
+   "group": "pvp",
+   "label": "Log Destroyed Enemy Structures"
+  },
+  {
+   "key": "hitMarkers",
+   "file": "gus",
+   "ini": "AllowHitMarkers",
+   "kind": "bool",
+   "official": true,
+   "group": "pvp",
+   "label": "Hit Markers"
+  },
+  {
+   "key": "floatingDamage",
+   "file": "gus",
+   "ini": "ShowFloatingDamageText",
+   "kind": "bool",
+   "official": false,
+   "group": "pvp",
+   "label": "Floating Damage Numbers"
+  },
+  {
+   "key": "autoPvE",
+   "file": "game",
+   "ini": "bAutoPvETimer",
+   "kind": "bool",
+   "official": false,
+   "group": "pvp",
+   "label": "Automatic PvE Window",
+   "help": "Switches a PvP server to PvE on a daily timer."
+  },
+  {
+   "key": "autoPvESystemTime",
+   "file": "game",
+   "ini": "bAutoPvEUseSystemTime",
+   "kind": "bool",
+   "official": false,
+   "group": "pvp",
+   "label": "Automatic PvE Uses Server Clock"
+  },
+  {
+   "key": "autoPvEStart",
+   "file": "game",
+   "ini": "AutoPvEStartTimeSeconds",
+   "kind": "float",
+   "official": 0,
+   "group": "pvp",
+   "label": "PvE Window Starts (seconds into the day)",
+   "min": 0,
+   "max": 86400
+  },
+  {
+   "key": "autoPvEStop",
+   "file": "game",
+   "ini": "AutoPvEStopTimeSeconds",
+   "kind": "float",
+   "official": 0,
+   "group": "pvp",
+   "label": "PvE Window Ends (seconds into the day)",
+   "min": 0,
+   "max": 86400
+  },
+  {
+   "key": "maxStructuresRange",
+   "file": "gus",
+   "ini": "TheMaxStructuresInRange",
+   "kind": "int",
+   "official": 10500,
+   "group": "building",
+   "label": "Max Structures In Range",
+   "min": 0,
+   "max": 1000000
+  },
+  {
+   "key": "caveBuildPvE",
+   "file": "gus",
+   "ini": "AllowCaveBuildingPvE",
+   "kind": "bool",
+   "official": false,
+   "group": "building",
+   "label": "Build In Caves (PvE)"
+  },
+  {
+   "key": "caveBuildPvP",
+   "file": "gus",
+   "ini": "AllowCaveBuildingPvP",
+   "kind": "bool",
+   "official": true,
+   "group": "building",
+   "label": "Build In Caves (PvP)"
+  },
+  {
+   "key": "crateOnStructures",
+   "file": "gus",
+   "ini": "AllowCrateSpawnsOnTopOfStructures",
+   "kind": "bool",
+   "official": false,
+   "group": "building",
+   "label": "Supply Crates On Structures"
+  },
+  {
+   "key": "pickup",
+   "file": "gus",
+   "ini": "AlwaysAllowStructurePickup",
+   "kind": "bool",
+   "official": false,
+   "group": "building",
+   "label": "Always Allow Pick-Up",
+   "help": "Removes the quick pick-up timer."
+  },
+  {
+   "key": "pickupHold",
+   "file": "gus",
+   "ini": "StructurePickupHoldDuration",
+   "kind": "float",
+   "official": 0.5,
+   "group": "building",
+   "label": "Pick-Up Hold Time (seconds)",
+   "min": 0,
+   "max": 60,
+   "help": "0 = instant."
+  },
+  {
+   "key": "pickupTime",
+   "file": "gus",
+   "ini": "StructurePickupTimeAfterPlacement",
+   "kind": "float",
+   "official": 30,
+   "group": "building",
+   "label": "Pick-Up Window (seconds)",
+   "min": 0,
+   "max": 86400
+  },
+  {
+   "key": "lockAll",
+   "file": "gus",
+   "ini": "ForceAllStructureLocking",
+   "kind": "bool",
+   "official": false,
+   "group": "building",
+   "label": "Lock All Structures By Default"
+  },
+  {
+   "key": "preventResourceRadius",
+   "file": "gus",
+   "ini": "StructurePreventResourceRadiusMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "building",
+   "label": "Resource-Blocking Radius",
+   "min": 0,
+   "max": 100
+  },
+  {
+   "key": "integratedSplus",
+   "file": "gus",
+   "ini": "AllowIntegratedSPlusStructures",
+   "kind": "bool",
+   "official": true,
+   "group": "building",
+   "label": "Built-In S+ Structures"
+  },
+  {
+   "key": "multiC4",
+   "file": "gus",
+   "ini": "AllowMultipleAttachedC4",
+   "kind": "bool",
+   "official": false,
+   "group": "building",
+   "label": "Several C4 On One Creature"
+  },
+  {
+   "key": "extraPreventionVolumes",
+   "file": "gus",
+   "ini": "EnableExtraStructurePreventionVolumes",
+   "kind": "bool",
+   "official": false,
+   "group": "building",
+   "label": "Block Building In Resource-Rich Areas"
+  },
+  {
+   "key": "ignorePreventionVolumes",
+   "file": "game",
+   "ini": "bIgnoreStructuresPreventionVolumes",
+   "kind": "bool",
+   "official": false,
+   "group": "building",
+   "label": "Build In Normally Blocked Areas"
+  },
+  {
+   "key": "placementCollision",
+   "file": "game",
+   "ini": "bDisableStructurePlacementCollision",
+   "kind": "bool",
+   "official": false,
+   "group": "building",
+   "label": "Allow Structures To Clip Terrain"
+  },
+  {
+   "key": "platformMultiFloors",
+   "file": "game",
+   "ini": "bAllowPlatformSaddleMultiFloors",
+   "kind": "bool",
+   "official": false,
+   "group": "building",
+   "label": "Multi-Floor Platform Saddles"
+  },
+  {
+   "key": "platformMax",
+   "file": "gus",
+   "ini": "MaxPlatformSaddleStructureLimit",
+   "kind": "int",
+   "official": 75,
+   "group": "building",
+   "label": "Max Platform Saddles",
+   "min": 0,
+   "max": 10000
+  },
+  {
+   "key": "platformStructures",
+   "file": "gus",
+   "ini": "PerPlatformMaxStructuresMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "building",
+   "label": "Structures On Platforms",
+   "min": 0,
+   "max": 100
+  },
+  {
+   "key": "platformBounds",
+   "file": "gus",
+   "ini": "PlatformSaddleBuildAreaBoundsMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "building",
+   "label": "Platform Build Distance",
+   "min": 0,
+   "max": 100
+  },
+  {
+   "key": "platformTurrets",
+   "file": "gus",
+   "ini": "OverrideStructurePlatformPrevention",
+   "kind": "bool",
+   "official": false,
+   "group": "building",
+   "label": "Turrets On Platform Saddles"
+  },
+  {
+   "key": "limitTurrets",
+   "file": "game",
+   "ini": "bLimitTurretsInRange",
+   "kind": "bool",
+   "official": true,
+   "group": "building",
+   "label": "Limit Turrets In Range"
+  },
+  {
+   "key": "hardLimitTurrets",
+   "file": "game",
+   "ini": "bHardLimitTurretsInRange",
+   "kind": "bool",
+   "official": false,
+   "group": "building",
+   "label": "Hard Turret Limit"
+  },
+  {
+   "key": "turretsNum",
+   "file": "game",
+   "ini": "LimitTurretsNum",
+   "kind": "int",
+   "official": 100,
+   "group": "building",
+   "label": "Turrets Per Area",
+   "min": 0,
+   "max": 100000
+  },
+  {
+   "key": "turretsRange",
+   "file": "game",
+   "ini": "LimitTurretsRange",
+   "kind": "float",
+   "official": 10000,
+   "group": "building",
+   "label": "Turret Area Range",
+   "min": 0,
+   "max": 1000000
+  },
+  {
+   "key": "fastDecayUnsnapped",
+   "file": "gus",
+   "ini": "FastDecayUnsnappedCoreStructures",
+   "kind": "bool",
+   "official": false,
+   "group": "building",
+   "label": "Fast Decay Of Unsnapped Foundations"
+  },
+  {
+   "key": "fastDecayInterval",
+   "file": "game",
+   "ini": "FastDecayInterval",
+   "kind": "int",
+   "official": 43200,
+   "group": "building",
+   "label": "Fast Decay Time (seconds)",
+   "min": 0,
+   "max": 31536000
+  },
+  {
+   "key": "structureRepairCooldown",
+   "file": "game",
+   "ini": "StructureDamageRepairCooldown",
+   "kind": "int",
+   "official": 180,
+   "group": "building",
+   "label": "Repair Cooldown After Damage (seconds)",
+   "min": 0,
+   "max": 86400,
+   "help": "0 turns it off."
+  },
+  {
+   "key": "waterPipes",
+   "file": "gus",
+   "ini": "DestroyUnconnectedWaterPipes",
+   "kind": "bool",
+   "official": false,
+   "group": "building",
+   "label": "Remove Unconnected Water Pipes"
+  },
+  {
+   "key": "autoDestroyOld",
+   "file": "gus",
+   "ini": "AutoDestroyOldStructuresMultiplier",
+   "kind": "float",
+   "official": 0,
+   "group": "building",
+   "label": "Old Structure Auto-Destroy Timer",
+   "min": 0,
+   "max": 1000,
+   "help": "Needs the Auto-Destroy Old Structures launch option."
+  },
+  {
+   "key": "tribeNameCooldown",
+   "file": "gus",
+   "ini": "TribeNameChangeCooldown",
+   "kind": "float",
+   "official": 15,
+   "group": "tribes",
+   "label": "Tribe Rename Cooldown (minutes)",
+   "min": 0,
+   "max": 100000
+  },
+  {
+   "key": "tribeSize",
+   "file": "game",
+   "ini": "MaxNumberOfPlayersInTribe",
+   "kind": "int",
+   "official": 0,
+   "group": "tribes",
+   "label": "Max Players Per Tribe",
+   "min": 0,
+   "max": 1000,
+   "help": "1 turns tribes off."
+  },
+  {
+   "key": "tribeSlotCooldown",
+   "file": "game",
+   "ini": "TribeSlotReuseCooldown",
+   "kind": "float",
+   "official": 0,
+   "group": "tribes",
+   "label": "Tribe Slot Reuse Cooldown (seconds)",
+   "min": 0,
+   "max": 31536000
+  },
+  {
+   "key": "alliancesPerTribe",
+   "file": "game",
+   "ini": "MaxAlliancesPerTribe",
+   "kind": "int",
+   "official": 0,
+   "group": "tribes",
+   "label": "Max Alliances Per Tribe",
+   "min": 0,
+   "max": 1000
+  },
+  {
+   "key": "tribesPerAlliance",
+   "file": "game",
+   "ini": "MaxTribesPerAlliance",
+   "kind": "int",
+   "official": 0,
+   "group": "tribes",
+   "label": "Max Tribes Per Alliance",
+   "min": 0,
+   "max": 1000
+  },
+  {
+   "key": "dayCycle",
+   "file": "gus",
+   "ini": "DayCycleSpeedScale",
+   "kind": "float",
+   "official": 1,
+   "group": "world",
+   "label": "Day Cycle Speed",
+   "min": 0.1,
+   "max": 100,
+   "help": "The whole day-night cycle. Above 1 is faster."
+  },
+  {
+   "key": "dayTime",
+   "file": "gus",
+   "ini": "DayTimeSpeedScale",
+   "kind": "float",
+   "official": 1,
+   "group": "world",
+   "label": "Daytime Speed",
+   "min": 0.1,
+   "max": 100
+  },
+  {
+   "key": "nightTime",
+   "file": "gus",
+   "ini": "NightTimeSpeedScale",
+   "kind": "float",
+   "official": 1,
+   "group": "world",
+   "label": "Night Speed",
+   "min": 0.1,
+   "max": 100,
+   "help": "Above 1 makes nights pass faster."
+  },
+  {
+   "key": "autoSaveMinutes",
+   "file": "gus",
+   "ini": "AutoSavePeriodMinutes",
+   "kind": "float",
+   "official": 15,
+   "group": "world",
+   "label": "Autosave Every (minutes)",
+   "min": 1,
+   "max": 600
+  },
+  {
+   "key": "kickIdleSeconds",
+   "file": "gus",
+   "ini": "KickIdlePlayersPeriod",
+   "kind": "float",
+   "official": 3600,
+   "group": "world",
+   "label": "Kick Idle Players After (seconds)",
+   "min": 60,
+   "max": 86400,
+   "help": "Needs the Kick Idle Players launch option."
+  },
+  {
+   "key": "mapPlayerLocation",
+   "file": "gus",
+   "ini": "ShowMapPlayerLocation",
+   "kind": "bool",
+   "official": true,
+   "group": "world",
+   "label": "Show Player On Map"
+  },
+  {
+   "key": "extinctionInterval",
+   "file": "gus",
+   "ini": "ExtinctionEventTimeInterval",
+   "kind": "int",
+   "official": 0,
+   "group": "world",
+   "label": "Extinction Event Interval (seconds)",
+   "min": 0,
+   "max": 315360000
+  },
+  {
+   "key": "npcStasisStart",
+   "file": "gus",
+   "ini": "NPCNetworkStasisRangeScalePlayerCountStart",
+   "kind": "int",
+   "official": 0,
+   "group": "world",
+   "label": "Dino Stasis Scaling Starts At (players)",
+   "min": 0,
+   "max": 1000
+  },
+  {
+   "key": "npcStasisEnd",
+   "file": "gus",
+   "ini": "NPCNetworkStasisRangeScalePlayerCountEnd",
+   "kind": "int",
+   "official": 0,
+   "group": "world",
+   "label": "Dino Stasis Scaling Ends At (players)",
+   "min": 0,
+   "max": 1000
+  },
+  {
+   "key": "npcStasisPercent",
+   "file": "gus",
+   "ini": "NPCNetworkStasisRangeScalePercentEnd",
+   "kind": "float",
+   "official": 0.55,
+   "group": "world",
+   "label": "Dino Stasis Range At End",
+   "min": 0,
+   "max": 1
+  },
+  {
+   "key": "thirdPerson",
+   "file": "gus",
+   "ini": "AllowThirdPersonPlayer",
+   "kind": "bool",
+   "official": true,
+   "group": "players",
+   "label": "Third-Person View"
+  },
+  {
+   "key": "crosshair",
+   "file": "gus",
+   "ini": "ServerCrosshair",
+   "kind": "bool",
+   "official": true,
+   "group": "players",
+   "label": "Crosshair"
+  },
+  {
+   "key": "proximityChat",
+   "file": "gus",
+   "ini": "ProximityChat",
+   "kind": "bool",
+   "official": false,
+   "group": "players",
+   "label": "Proximity Chat",
+   "help": "Chat only reaches nearby players."
+  },
+  {
+   "key": "voiceGlobal",
+   "file": "gus",
+   "ini": "globalVoiceChat",
+   "kind": "bool",
+   "official": false,
+   "group": "players",
+   "label": "Global Voice Chat"
+  },
+  {
+   "key": "corpseLocator",
+   "file": "game",
+   "ini": "bUseCorpseLocator",
+   "kind": "bool",
+   "official": true,
+   "group": "players",
+   "label": "Corpse Light Beam"
+  },
+  {
+   "key": "levelUpAnim",
+   "file": "game",
+   "ini": "bUseDinoLevelUpAnimations",
+   "kind": "bool",
+   "official": true,
+   "group": "players",
+   "label": "Dino Level-Up Animation"
+  },
+  {
+   "key": "creativeMode",
+   "file": "game",
+   "ini": "bShowCreativeMode",
+   "kind": "bool",
+   "official": false,
+   "group": "players",
+   "label": "Creative Mode Toggle",
+   "help": "Shows it in the pause menu."
+  },
+  {
+   "key": "adminLogging",
+   "file": "gus",
+   "ini": "AdminLogging",
+   "kind": "bool",
+   "official": false,
+   "group": "players",
+   "label": "Show Admin Commands In Chat"
+  },
+  {
+   "key": "alwaysNotifyLeft",
+   "file": "gus",
+   "ini": "AlwaysNotifyPlayerLeft",
+   "kind": "bool",
+   "official": false,
+   "group": "players",
+   "label": "Always Announce Leaving"
+  },
+  {
+   "key": "noJoinNotify",
+   "file": "gus",
+   "ini": "DontAlwaysNotifyPlayerJoined",
+   "kind": "bool",
+   "official": false,
+   "group": "players",
+   "label": "Do Not Announce Joining"
+  },
+  {
+   "key": "shareConnections",
+   "file": "gus",
+   "ini": "AllowSharedConnections",
+   "kind": "bool",
+   "official": false,
+   "group": "players",
+   "label": "Allow Family-Shared Accounts"
+  },
+  {
+   "key": "motdDuration",
+   "file": "gus",
+   "ini": "Duration",
+   "kind": "int",
+   "official": 20,
+   "group": "players",
+   "label": "Message Of The Day Duration (seconds)",
+   "section": "MessageOfTheDay",
+   "min": 1,
+   "max": 3600
+  },
+  {
+   "key": "noTribute",
+   "file": "gus",
+   "ini": "noTributeDownloads",
+   "kind": "bool",
+   "official": false,
+   "group": "transfers",
+   "label": "Block Downloads",
+   "help": "Blocks Cross-ARK downloads."
+  },
+  {
+   "key": "noDownDinos",
+   "file": "gus",
+   "ini": "PreventDownloadDinos",
+   "kind": "bool",
+   "official": false,
+   "group": "transfers",
+   "label": "Block Dinos Download"
+  },
+  {
+   "key": "noUpDinos",
+   "file": "gus",
+   "ini": "PreventUploadDinos",
+   "kind": "bool",
+   "official": false,
+   "group": "transfers",
+   "label": "Block Dinos Upload"
+  },
+  {
+   "key": "noDownItems",
+   "file": "gus",
+   "ini": "PreventDownloadItems",
+   "kind": "bool",
+   "official": false,
+   "group": "transfers",
+   "label": "Block Items Download"
+  },
+  {
+   "key": "noUpItems",
+   "file": "gus",
+   "ini": "PreventUploadItems",
+   "kind": "bool",
+   "official": false,
+   "group": "transfers",
+   "label": "Block Items Upload"
+  },
+  {
+   "key": "noDownSurvivors",
+   "file": "gus",
+   "ini": "PreventDownloadSurvivors",
+   "kind": "bool",
+   "official": false,
+   "group": "transfers",
+   "label": "Block Survivors Download"
+  },
+  {
+   "key": "noUpSurvivors",
+   "file": "gus",
+   "ini": "PreventUploadSurvivors",
+   "kind": "bool",
+   "official": false,
+   "group": "transfers",
+   "label": "Block Survivors Upload"
+  },
+  {
+   "key": "tributeCharacters",
+   "file": "gus",
+   "ini": "MaxTributeCharacters",
+   "kind": "int",
+   "official": 10,
+   "group": "transfers",
+   "label": "Upload Slots: Survivors",
+   "min": 0,
+   "max": 1000
+  },
+  {
+   "key": "tributeDinos",
+   "file": "gus",
+   "ini": "MaxTributeDinos",
+   "kind": "int",
+   "official": 20,
+   "group": "transfers",
+   "label": "Upload Slots: Dinos",
+   "min": 0,
+   "max": 1000
+  },
+  {
+   "key": "tributeItems",
+   "file": "gus",
+   "ini": "MaxTributeItems",
+   "kind": "int",
+   "official": 50,
+   "group": "transfers",
+   "label": "Upload Slots: Items",
+   "min": 0,
+   "max": 1000
+  },
+  {
+   "key": "expireCharacters",
+   "file": "gus",
+   "ini": "TributeCharacterExpirationSeconds",
+   "kind": "int",
+   "official": 0,
+   "group": "transfers",
+   "label": "Survivor Upload Expiry (seconds)",
+   "min": 0,
+   "max": 31536000,
+   "help": "0 = never."
+  },
+  {
+   "key": "expireDinos",
+   "file": "gus",
+   "ini": "TributeDinoExpirationSeconds",
+   "kind": "int",
+   "official": 86400,
+   "group": "transfers",
+   "label": "Dino Upload Expiry (seconds)",
+   "min": 0,
+   "max": 31536000
+  },
+  {
+   "key": "expireItems",
+   "file": "gus",
+   "ini": "TributeItemExpirationSeconds",
+   "kind": "int",
+   "official": 86400,
+   "group": "transfers",
+   "label": "Item Upload Expiry (seconds)",
+   "min": 0,
+   "max": 31536000
+  },
+  {
+   "key": "reuploadInterval",
+   "file": "gus",
+   "ini": "MinimumDinoReuploadInterval",
+   "kind": "float",
+   "official": 0,
+   "group": "transfers",
+   "label": "Dino Re-Upload Interval (seconds)",
+   "min": 0,
+   "max": 31536000
+  },
+  {
+   "key": "foreignDinos",
+   "file": "gus",
+   "ini": "CrossARKAllowForeignDinoDownloads",
+   "kind": "bool",
+   "official": false,
+   "group": "transfers",
+   "label": "Foreign Dinos On Aberration"
+  },
+  {
+   "key": "cryoNerf",
+   "file": "gus",
+   "ini": "EnableCryopodNerf",
+   "kind": "bool",
+   "official": false,
+   "group": "crafting",
+   "label": "Cryopod Cooldown Rules"
+  },
+  {
+   "key": "cryoNerfDuration",
+   "file": "gus",
+   "ini": "CryopodNerfDuration",
+   "kind": "int",
+   "official": 0,
+   "group": "crafting",
+   "label": "Cryosickness (seconds)",
+   "min": 0,
+   "max": 3600,
+   "help": "Official uses 10."
+  },
+  {
+   "key": "cryoNerfDamage",
+   "file": "gus",
+   "ini": "CryopodNerfDamageMult",
+   "kind": "float",
+   "official": 0.01,
+   "group": "crafting",
+   "label": "Damage Right After Cryo Release",
+   "min": 0,
+   "max": 1
+  },
+  {
+   "key": "cryoNoFridge",
+   "file": "gus",
+   "ini": "DisableCryopodFridgeRequirement",
+   "kind": "bool",
+   "official": false,
+   "group": "crafting",
+   "label": "Cryopods Without A Fridge"
+  },
+  {
+   "key": "craftingBonus",
+   "file": "game",
+   "ini": "CraftingSkillBonusMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "crafting",
+   "label": "Crafting Skill Bonus",
+   "min": 0,
+   "max": 1000
+  },
+  {
+   "key": "customRecipes",
+   "file": "game",
+   "ini": "bAllowCustomRecipes",
+   "kind": "bool",
+   "official": true,
+   "group": "crafting",
+   "label": "Custom Recipes"
+  },
+  {
+   "key": "customRecipeEffect",
+   "file": "game",
+   "ini": "CustomRecipeEffectivenessMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "crafting",
+   "label": "Custom Recipe Effectiveness",
+   "min": 0,
+   "max": 1000
+  },
+  {
+   "key": "customRecipeSkill",
+   "file": "game",
+   "ini": "CustomRecipeSkillMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "crafting",
+   "label": "Custom Recipe Skill",
+   "min": 0,
+   "max": 1000
+  },
+  {
+   "key": "itemDropLimit",
+   "file": "game",
+   "ini": "LimitNonPlayerDroppedItemsCount",
+   "kind": "int",
+   "official": 0,
+   "group": "crafting",
+   "label": "Dropped Item Limit",
+   "min": 0,
+   "max": 100000,
+   "help": "Official servers use 600."
+  },
+  {
+   "key": "itemDropRange",
+   "file": "game",
+   "ini": "LimitNonPlayerDroppedItemsRange",
+   "kind": "int",
+   "official": 0,
+   "group": "crafting",
+   "label": "Dropped Item Limit Range",
+   "min": 0,
+   "max": 1000000,
+   "help": "Official servers use 1600."
+  },
+  {
+   "key": "wirelessRange",
+   "file": "game",
+   "ini": "WirelessCraftingRangeOverride",
+   "kind": "int",
+   "official": 3000,
+   "group": "crafting",
+   "label": "Wireless Crafting Range",
+   "min": 0,
+   "max": 1000000
+  },
+  {
+   "key": "batteryDecay",
+   "file": "game",
+   "ini": "GlobalPoweredBatteryDurabilityDecreasePerSecond",
+   "kind": "float",
+   "official": 3,
+   "group": "crafting",
+   "label": "Powered Battery Decay",
+   "min": 0,
+   "max": 1000
+  },
+  {
+   "key": "tribeTower",
+   "file": "game",
+   "ini": "TribeTowerBonusMultiplier",
+   "kind": "float",
+   "official": 2,
+   "group": "crafting",
+   "label": "Tribe Tower Bonus",
+   "min": 0,
+   "max": 100
+  },
+  {
+   "key": "singlePlayerSettings",
+   "file": "game",
+   "ini": "bUseSingleplayerSettings",
+   "kind": "bool",
+   "official": false,
+   "group": "crafting",
+   "label": "Single-Player Balance",
+   "help": "Extra balance multipliers meant for small servers."
+  },
+  {
+   "key": "autoUnlockEngrams",
+   "file": "game",
+   "ini": "bAutoUnlockAllEngrams",
+   "kind": "bool",
+   "official": false,
+   "group": "crafting",
+   "label": "Unlock All Engrams",
+   "help": "Ignores any engram overrides."
+  },
+  {
+   "key": "onlySpecifiedEngrams",
+   "file": "game",
+   "ini": "bOnlyAllowSpecifiedEngrams",
+   "kind": "bool",
+   "official": false,
+   "group": "crafting",
+   "label": "Hide Unlisted Engrams"
+  },
+  {
+   "key": "maxPlayerXp",
+   "file": "game",
+   "ini": "OverrideMaxExperiencePointsPlayer",
+   "kind": "int",
+   "official": 0,
+   "group": "crafting",
+   "label": "Max Player XP",
+   "min": 0,
+   "max": 2000000000
+  },
+  {
+   "key": "maxDinoXp",
+   "file": "game",
+   "ini": "OverrideMaxExperiencePointsDino",
+   "kind": "int",
+   "official": 0,
+   "group": "crafting",
+   "label": "Max Dino XP",
+   "min": 0,
+   "max": 2000000000
+  },
+  {
+   "key": "hexReward",
+   "file": "game",
+   "ini": "BaseHexagonRewardMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "genesis",
+   "label": "Hexagon Rewards",
+   "min": 0,
+   "max": 1000,
+   "help": "Genesis: Part 1."
+  },
+  {
+   "key": "hexCost",
+   "file": "game",
+   "ini": "HexagonCostMultiplier",
+   "kind": "float",
+   "official": 1,
+   "group": "genesis",
+   "label": "Hexagon Store Prices",
+   "min": 0,
+   "max": 1000
+  },
+  {
+   "key": "hexStoreOff",
+   "file": "game",
+   "ini": "bDisableHexagonStore",
+   "kind": "bool",
+   "official": false,
+   "group": "genesis",
+   "label": "Disable Hexagon Store"
+  },
+  {
+   "key": "missionsOff",
+   "file": "game",
+   "ini": "bDisableGenesisMissions",
+   "kind": "bool",
+   "official": false,
+   "group": "genesis",
+   "label": "Disable Missions"
+  },
+  {
+   "key": "worldBuffsOff",
+   "file": "game",
+   "ini": "bDisableWorldBuffs",
+   "kind": "bool",
+   "official": false,
+   "group": "genesis",
+   "label": "Disable World Buffs"
+  },
+  {
+   "key": "tekGenesis",
+   "file": "gus",
+   "ini": "AllowTekSuitPowersInGenesis",
+   "kind": "bool",
+   "official": false,
+   "group": "genesis",
+   "label": "TEK Suit Powers In Genesis"
+  },
+  {
+   "key": "maxHex",
+   "file": "gus",
+   "ini": "MaxHexagonsPerCharacter",
+   "kind": "int",
+   "official": 2000000000,
+   "group": "genesis",
+   "label": "Max Hexagons Per Character",
+   "min": 0,
+   "max": 2000000000
+  },
+  {
+   "key": "statBase0",
+   "file": "game",
+   "ini": "PlayerBaseStatMultipliers[0]",
+   "kind": "float",
+   "official": 1.0,
+   "group": "stats",
+   "label": "Health: player starting stat",
+   "min": 0.01,
+   "max": 1000,
+   "matrix": {
+    "id": "statBase",
+    "stat": 0,
+    "statName": "Health"
+   }
+  },
+  {
+   "key": "statBase1",
+   "file": "game",
+   "ini": "PlayerBaseStatMultipliers[1]",
+   "kind": "float",
+   "official": 1.0,
+   "group": "stats",
+   "label": "Stamina: player starting stat",
+   "min": 0.01,
+   "max": 1000,
+   "matrix": {
+    "id": "statBase",
+    "stat": 1,
+    "statName": "Stamina"
+   }
+  },
+  {
+   "key": "statBase2",
+   "file": "game",
+   "ini": "PlayerBaseStatMultipliers[2]",
+   "kind": "float",
+   "official": 1.0,
+   "group": "stats",
+   "label": "Torpidity: player starting stat",
+   "min": 0.01,
+   "max": 1000,
+   "matrix": {
+    "id": "statBase",
+    "stat": 2,
+    "statName": "Torpidity"
+   }
+  },
+  {
+   "key": "statBase3",
+   "file": "game",
+   "ini": "PlayerBaseStatMultipliers[3]",
+   "kind": "float",
+   "official": 1.0,
+   "group": "stats",
+   "label": "Oxygen: player starting stat",
+   "min": 0.01,
+   "max": 1000,
+   "matrix": {
+    "id": "statBase",
+    "stat": 3,
+    "statName": "Oxygen"
+   }
+  },
+  {
+   "key": "statBase4",
+   "file": "game",
+   "ini": "PlayerBaseStatMultipliers[4]",
+   "kind": "float",
+   "official": 1.0,
+   "group": "stats",
+   "label": "Food: player starting stat",
+   "min": 0.01,
+   "max": 1000,
+   "matrix": {
+    "id": "statBase",
+    "stat": 4,
+    "statName": "Food"
+   }
+  },
+  {
+   "key": "statBase5",
+   "file": "game",
+   "ini": "PlayerBaseStatMultipliers[5]",
+   "kind": "float",
+   "official": 1.0,
+   "group": "stats",
+   "label": "Water: player starting stat",
+   "min": 0.01,
+   "max": 1000,
+   "matrix": {
+    "id": "statBase",
+    "stat": 5,
+    "statName": "Water"
+   }
+  },
+  {
+   "key": "statBase7",
+   "file": "game",
+   "ini": "PlayerBaseStatMultipliers[7]",
+   "kind": "float",
+   "official": 1.0,
+   "group": "stats",
+   "label": "Weight: player starting stat",
+   "min": 0.01,
+   "max": 1000,
+   "matrix": {
+    "id": "statBase",
+    "stat": 7,
+    "statName": "Weight"
+   }
+  },
+  {
+   "key": "statPlayer0",
+   "file": "game",
+   "ini": "PerLevelStatsMultiplier_Player[0]",
+   "kind": "float",
+   "official": 1.0,
+   "group": "stats",
+   "label": "Health: player per level",
+   "min": 0.01,
+   "max": 1000,
+   "matrix": {
+    "id": "statPlayer",
+    "stat": 0,
+    "statName": "Health"
+   }
+  },
+  {
+   "key": "statPlayer1",
+   "file": "game",
+   "ini": "PerLevelStatsMultiplier_Player[1]",
+   "kind": "float",
+   "official": 1.0,
+   "group": "stats",
+   "label": "Stamina: player per level",
+   "min": 0.01,
+   "max": 1000,
+   "matrix": {
+    "id": "statPlayer",
+    "stat": 1,
+    "statName": "Stamina"
+   }
+  },
+  {
+   "key": "statPlayer2",
+   "file": "game",
+   "ini": "PerLevelStatsMultiplier_Player[2]",
+   "kind": "float",
+   "official": 1.0,
+   "group": "stats",
+   "label": "Torpidity: player per level",
+   "min": 0.01,
+   "max": 1000,
+   "matrix": {
+    "id": "statPlayer",
+    "stat": 2,
+    "statName": "Torpidity"
+   }
+  },
+  {
+   "key": "statPlayer3",
+   "file": "game",
+   "ini": "PerLevelStatsMultiplier_Player[3]",
+   "kind": "float",
+   "official": 1.0,
+   "group": "stats",
+   "label": "Oxygen: player per level",
+   "min": 0.01,
+   "max": 1000,
+   "matrix": {
+    "id": "statPlayer",
+    "stat": 3,
+    "statName": "Oxygen"
+   }
+  },
+  {
+   "key": "statPlayer4",
+   "file": "game",
+   "ini": "PerLevelStatsMultiplier_Player[4]",
+   "kind": "float",
+   "official": 1.0,
+   "group": "stats",
+   "label": "Food: player per level",
+   "min": 0.01,
+   "max": 1000,
+   "matrix": {
+    "id": "statPlayer",
+    "stat": 4,
+    "statName": "Food"
+   }
+  },
+  {
+   "key": "statPlayer7",
+   "file": "game",
+   "ini": "PerLevelStatsMultiplier_Player[7]",
+   "kind": "float",
+   "official": 1.0,
+   "group": "stats",
+   "label": "Weight: player per level",
+   "min": 0.01,
+   "max": 1000,
+   "matrix": {
+    "id": "statPlayer",
+    "stat": 7,
+    "statName": "Weight"
+   }
+  },
+  {
+   "key": "statPlayer8",
+   "file": "game",
+   "ini": "PerLevelStatsMultiplier_Player[8]",
+   "kind": "float",
+   "official": 1.0,
+   "group": "stats",
+   "label": "Melee Damage: player per level",
+   "min": 0.01,
+   "max": 1000,
+   "matrix": {
+    "id": "statPlayer",
+    "stat": 8,
+    "statName": "Melee Damage"
+   }
+  },
+  {
+   "key": "statPlayer9",
+   "file": "game",
+   "ini": "PerLevelStatsMultiplier_Player[9]",
+   "kind": "float",
+   "official": 1.0,
+   "group": "stats",
+   "label": "Movement Speed: player per level",
+   "min": 0.01,
+   "max": 1000,
+   "matrix": {
+    "id": "statPlayer",
+    "stat": 9,
+    "statName": "Movement Speed"
+   }
+  },
+  {
+   "key": "statWild0",
+   "file": "game",
+   "ini": "PerLevelStatsMultiplier_DinoWild[0]",
+   "kind": "float",
+   "official": 1.0,
+   "group": "stats",
+   "label": "Health: wild dino per level",
+   "min": 0.01,
+   "max": 1000,
+   "matrix": {
+    "id": "statWild",
+    "stat": 0,
+    "statName": "Health"
+   }
+  },
+  {
+   "key": "statWild1",
+   "file": "game",
+   "ini": "PerLevelStatsMultiplier_DinoWild[1]",
+   "kind": "float",
+   "official": 1.0,
+   "group": "stats",
+   "label": "Stamina: wild dino per level",
+   "min": 0.01,
+   "max": 1000,
+   "matrix": {
+    "id": "statWild",
+    "stat": 1,
+    "statName": "Stamina"
+   }
+  },
+  {
+   "key": "statWild2",
+   "file": "game",
+   "ini": "PerLevelStatsMultiplier_DinoWild[2]",
+   "kind": "float",
+   "official": 1.0,
+   "group": "stats",
+   "label": "Torpidity: wild dino per level",
+   "min": 0.01,
+   "max": 1000,
+   "matrix": {
+    "id": "statWild",
+    "stat": 2,
+    "statName": "Torpidity"
+   }
+  },
+  {
+   "key": "statWild3",
+   "file": "game",
+   "ini": "PerLevelStatsMultiplier_DinoWild[3]",
+   "kind": "float",
+   "official": 1.0,
+   "group": "stats",
+   "label": "Oxygen: wild dino per level",
+   "min": 0.01,
+   "max": 1000,
+   "matrix": {
+    "id": "statWild",
+    "stat": 3,
+    "statName": "Oxygen"
+   }
+  },
+  {
+   "key": "statWild4",
+   "file": "game",
+   "ini": "PerLevelStatsMultiplier_DinoWild[4]",
+   "kind": "float",
+   "official": 1.0,
+   "group": "stats",
+   "label": "Food: wild dino per level",
+   "min": 0.01,
+   "max": 1000,
+   "matrix": {
+    "id": "statWild",
+    "stat": 4,
+    "statName": "Food"
+   }
+  },
+  {
+   "key": "statWild7",
+   "file": "game",
+   "ini": "PerLevelStatsMultiplier_DinoWild[7]",
+   "kind": "float",
+   "official": 1.0,
+   "group": "stats",
+   "label": "Weight: wild dino per level",
+   "min": 0.01,
+   "max": 1000,
+   "matrix": {
+    "id": "statWild",
+    "stat": 7,
+    "statName": "Weight"
+   }
+  },
+  {
+   "key": "statWild8",
+   "file": "game",
+   "ini": "PerLevelStatsMultiplier_DinoWild[8]",
+   "kind": "float",
+   "official": 1.0,
+   "group": "stats",
+   "label": "Melee Damage: wild dino per level",
+   "min": 0.01,
+   "max": 1000,
+   "matrix": {
+    "id": "statWild",
+    "stat": 8,
+    "statName": "Melee Damage"
+   }
+  },
+  {
+   "key": "statWild9",
+   "file": "game",
+   "ini": "PerLevelStatsMultiplier_DinoWild[9]",
+   "kind": "float",
+   "official": 1.0,
+   "group": "stats",
+   "label": "Movement Speed: wild dino per level",
+   "min": 0.01,
+   "max": 1000,
+   "matrix": {
+    "id": "statWild",
+    "stat": 9,
+    "statName": "Movement Speed"
+   }
+  },
+  {
+   "key": "statTamed0",
+   "file": "game",
+   "ini": "PerLevelStatsMultiplier_DinoTamed[0]",
+   "kind": "float",
+   "official": 0.2,
+   "group": "stats",
+   "label": "Health: tamed dino per level",
+   "min": 0.01,
+   "max": 1000,
+   "matrix": {
+    "id": "statTamed",
+    "stat": 0,
+    "statName": "Health"
+   }
+  },
+  {
+   "key": "statTamed1",
+   "file": "game",
+   "ini": "PerLevelStatsMultiplier_DinoTamed[1]",
+   "kind": "float",
+   "official": 1.0,
+   "group": "stats",
+   "label": "Stamina: tamed dino per level",
+   "min": 0.01,
+   "max": 1000,
+   "matrix": {
+    "id": "statTamed",
+    "stat": 1,
+    "statName": "Stamina"
+   }
+  },
+  {
+   "key": "statTamed2",
+   "file": "game",
+   "ini": "PerLevelStatsMultiplier_DinoTamed[2]",
+   "kind": "float",
+   "official": 1.0,
+   "group": "stats",
+   "label": "Torpidity: tamed dino per level",
+   "min": 0.01,
+   "max": 1000,
+   "matrix": {
+    "id": "statTamed",
+    "stat": 2,
+    "statName": "Torpidity"
+   }
+  },
+  {
+   "key": "statTamed3",
+   "file": "game",
+   "ini": "PerLevelStatsMultiplier_DinoTamed[3]",
+   "kind": "float",
+   "official": 1.0,
+   "group": "stats",
+   "label": "Oxygen: tamed dino per level",
+   "min": 0.01,
+   "max": 1000,
+   "matrix": {
+    "id": "statTamed",
+    "stat": 3,
+    "statName": "Oxygen"
+   }
+  },
+  {
+   "key": "statTamed4",
+   "file": "game",
+   "ini": "PerLevelStatsMultiplier_DinoTamed[4]",
+   "kind": "float",
+   "official": 1.0,
+   "group": "stats",
+   "label": "Food: tamed dino per level",
+   "min": 0.01,
+   "max": 1000,
+   "matrix": {
+    "id": "statTamed",
+    "stat": 4,
+    "statName": "Food"
+   }
+  },
+  {
+   "key": "statTamed7",
+   "file": "game",
+   "ini": "PerLevelStatsMultiplier_DinoTamed[7]",
+   "kind": "float",
+   "official": 1.0,
+   "group": "stats",
+   "label": "Weight: tamed dino per level",
+   "min": 0.01,
+   "max": 1000,
+   "matrix": {
+    "id": "statTamed",
+    "stat": 7,
+    "statName": "Weight"
+   }
+  },
+  {
+   "key": "statTamed8",
+   "file": "game",
+   "ini": "PerLevelStatsMultiplier_DinoTamed[8]",
+   "kind": "float",
+   "official": 0.17,
+   "group": "stats",
+   "label": "Melee Damage: tamed dino per level",
+   "min": 0.01,
+   "max": 1000,
+   "matrix": {
+    "id": "statTamed",
+    "stat": 8,
+    "statName": "Melee Damage"
+   }
+  },
+  {
+   "key": "statTamed9",
+   "file": "game",
+   "ini": "PerLevelStatsMultiplier_DinoTamed[9]",
+   "kind": "float",
+   "official": 1.0,
+   "group": "stats",
+   "label": "Movement Speed: tamed dino per level",
+   "min": 0.01,
+   "max": 1000,
+   "matrix": {
+    "id": "statTamed",
+    "stat": 9,
+    "statName": "Movement Speed"
+   }
+  },
+  {
+   "key": "statTamedAdd0",
+   "file": "game",
+   "ini": "PerLevelStatsMultiplier_DinoTamed_Add[0]",
+   "kind": "float",
+   "official": 0.14,
+   "group": "stats",
+   "label": "Health: tamed dino added on taming",
+   "min": 0.01,
+   "max": 1000,
+   "matrix": {
+    "id": "statTamedAdd",
+    "stat": 0,
+    "statName": "Health"
+   }
+  },
+  {
+   "key": "statTamedAdd1",
+   "file": "game",
+   "ini": "PerLevelStatsMultiplier_DinoTamed_Add[1]",
+   "kind": "float",
+   "official": 1.0,
+   "group": "stats",
+   "label": "Stamina: tamed dino added on taming",
+   "min": 0.01,
+   "max": 1000,
+   "matrix": {
+    "id": "statTamedAdd",
+    "stat": 1,
+    "statName": "Stamina"
+   }
+  },
+  {
+   "key": "statTamedAdd2",
+   "file": "game",
+   "ini": "PerLevelStatsMultiplier_DinoTamed_Add[2]",
+   "kind": "float",
+   "official": 1.0,
+   "group": "stats",
+   "label": "Torpidity: tamed dino added on taming",
+   "min": 0.01,
+   "max": 1000,
+   "matrix": {
+    "id": "statTamedAdd",
+    "stat": 2,
+    "statName": "Torpidity"
+   }
+  },
+  {
+   "key": "statTamedAdd3",
+   "file": "game",
+   "ini": "PerLevelStatsMultiplier_DinoTamed_Add[3]",
+   "kind": "float",
+   "official": 1.0,
+   "group": "stats",
+   "label": "Oxygen: tamed dino added on taming",
+   "min": 0.01,
+   "max": 1000,
+   "matrix": {
+    "id": "statTamedAdd",
+    "stat": 3,
+    "statName": "Oxygen"
+   }
+  },
+  {
+   "key": "statTamedAdd4",
+   "file": "game",
+   "ini": "PerLevelStatsMultiplier_DinoTamed_Add[4]",
+   "kind": "float",
+   "official": 1.0,
+   "group": "stats",
+   "label": "Food: tamed dino added on taming",
+   "min": 0.01,
+   "max": 1000,
+   "matrix": {
+    "id": "statTamedAdd",
+    "stat": 4,
+    "statName": "Food"
+   }
+  },
+  {
+   "key": "statTamedAdd7",
+   "file": "game",
+   "ini": "PerLevelStatsMultiplier_DinoTamed_Add[7]",
+   "kind": "float",
+   "official": 1.0,
+   "group": "stats",
+   "label": "Weight: tamed dino added on taming",
+   "min": 0.01,
+   "max": 1000,
+   "matrix": {
+    "id": "statTamedAdd",
+    "stat": 7,
+    "statName": "Weight"
+   }
+  },
+  {
+   "key": "statTamedAdd8",
+   "file": "game",
+   "ini": "PerLevelStatsMultiplier_DinoTamed_Add[8]",
+   "kind": "float",
+   "official": 0.14,
+   "group": "stats",
+   "label": "Melee Damage: tamed dino added on taming",
+   "min": 0.01,
+   "max": 1000,
+   "matrix": {
+    "id": "statTamedAdd",
+    "stat": 8,
+    "statName": "Melee Damage"
+   }
+  },
+  {
+   "key": "statTamedAdd9",
+   "file": "game",
+   "ini": "PerLevelStatsMultiplier_DinoTamed_Add[9]",
+   "kind": "float",
+   "official": 1.0,
+   "group": "stats",
+   "label": "Movement Speed: tamed dino added on taming",
+   "min": 0.01,
+   "max": 1000,
+   "matrix": {
+    "id": "statTamedAdd",
+    "stat": 9,
+    "statName": "Movement Speed"
+   }
+  },
+  {
+   "key": "statTamedAff0",
+   "file": "game",
+   "ini": "PerLevelStatsMultiplier_DinoTamed_Affinity[0]",
+   "kind": "float",
+   "official": 0.44,
+   "group": "stats",
+   "label": "Health: tamed dino affinity",
+   "min": 0.01,
+   "max": 1000,
+   "matrix": {
+    "id": "statTamedAff",
+    "stat": 0,
+    "statName": "Health"
+   }
+  },
+  {
+   "key": "statTamedAff1",
+   "file": "game",
+   "ini": "PerLevelStatsMultiplier_DinoTamed_Affinity[1]",
+   "kind": "float",
+   "official": 1.0,
+   "group": "stats",
+   "label": "Stamina: tamed dino affinity",
+   "min": 0.01,
+   "max": 1000,
+   "matrix": {
+    "id": "statTamedAff",
+    "stat": 1,
+    "statName": "Stamina"
+   }
+  },
+  {
+   "key": "statTamedAff2",
+   "file": "game",
+   "ini": "PerLevelStatsMultiplier_DinoTamed_Affinity[2]",
+   "kind": "float",
+   "official": 1.0,
+   "group": "stats",
+   "label": "Torpidity: tamed dino affinity",
+   "min": 0.01,
+   "max": 1000,
+   "matrix": {
+    "id": "statTamedAff",
+    "stat": 2,
+    "statName": "Torpidity"
+   }
+  },
+  {
+   "key": "statTamedAff3",
+   "file": "game",
+   "ini": "PerLevelStatsMultiplier_DinoTamed_Affinity[3]",
+   "kind": "float",
+   "official": 1.0,
+   "group": "stats",
+   "label": "Oxygen: tamed dino affinity",
+   "min": 0.01,
+   "max": 1000,
+   "matrix": {
+    "id": "statTamedAff",
+    "stat": 3,
+    "statName": "Oxygen"
+   }
+  },
+  {
+   "key": "statTamedAff4",
+   "file": "game",
+   "ini": "PerLevelStatsMultiplier_DinoTamed_Affinity[4]",
+   "kind": "float",
+   "official": 1.0,
+   "group": "stats",
+   "label": "Food: tamed dino affinity",
+   "min": 0.01,
+   "max": 1000,
+   "matrix": {
+    "id": "statTamedAff",
+    "stat": 4,
+    "statName": "Food"
+   }
+  },
+  {
+   "key": "statTamedAff7",
+   "file": "game",
+   "ini": "PerLevelStatsMultiplier_DinoTamed_Affinity[7]",
+   "kind": "float",
+   "official": 1.0,
+   "group": "stats",
+   "label": "Weight: tamed dino affinity",
+   "min": 0.01,
+   "max": 1000,
+   "matrix": {
+    "id": "statTamedAff",
+    "stat": 7,
+    "statName": "Weight"
+   }
+  },
+  {
+   "key": "statTamedAff8",
+   "file": "game",
+   "ini": "PerLevelStatsMultiplier_DinoTamed_Affinity[8]",
+   "kind": "float",
+   "official": 0.44,
+   "group": "stats",
+   "label": "Melee Damage: tamed dino affinity",
+   "min": 0.01,
+   "max": 1000,
+   "matrix": {
+    "id": "statTamedAff",
+    "stat": 8,
+    "statName": "Melee Damage"
+   }
+  },
+  {
+   "key": "statTamedAff9",
+   "file": "game",
+   "ini": "PerLevelStatsMultiplier_DinoTamed_Affinity[9]",
+   "kind": "float",
+   "official": 1.0,
+   "group": "stats",
+   "label": "Movement Speed: tamed dino affinity",
+   "min": 0.01,
+   "max": 1000,
+   "matrix": {
+    "id": "statTamedAff",
+    "stat": 9,
+    "statName": "Movement Speed"
+   }
+  },
+  {
+   "key": "mutagen0",
+   "file": "game",
+   "ini": "MutagenLevelBoost[0]",
+   "kind": "int",
+   "official": 5,
+   "group": "stats",
+   "label": "Health: mutagen level points (wild)",
+   "min": 0,
+   "max": 1000,
+   "matrix": {
+    "id": "mutagen",
+    "stat": 0,
+    "statName": "Health"
+   }
+  },
+  {
+   "key": "mutagen1",
+   "file": "game",
+   "ini": "MutagenLevelBoost[1]",
+   "kind": "int",
+   "official": 5,
+   "group": "stats",
+   "label": "Stamina: mutagen level points (wild)",
+   "min": 0,
+   "max": 1000,
+   "matrix": {
+    "id": "mutagen",
+    "stat": 1,
+    "statName": "Stamina"
+   }
+  },
+  {
+   "key": "mutagen2",
+   "file": "game",
+   "ini": "MutagenLevelBoost[2]",
+   "kind": "int",
+   "official": 0,
+   "group": "stats",
+   "label": "Torpidity: mutagen level points (wild)",
+   "min": 0,
+   "max": 1000,
+   "matrix": {
+    "id": "mutagen",
+    "stat": 2,
+    "statName": "Torpidity"
+   }
+  },
+  {
+   "key": "mutagen3",
+   "file": "game",
+   "ini": "MutagenLevelBoost[3]",
+   "kind": "int",
+   "official": 0,
+   "group": "stats",
+   "label": "Oxygen: mutagen level points (wild)",
+   "min": 0,
+   "max": 1000,
+   "matrix": {
+    "id": "mutagen",
+    "stat": 3,
+    "statName": "Oxygen"
+   }
+  },
+  {
+   "key": "mutagen4",
+   "file": "game",
+   "ini": "MutagenLevelBoost[4]",
+   "kind": "int",
+   "official": 0,
+   "group": "stats",
+   "label": "Food: mutagen level points (wild)",
+   "min": 0,
+   "max": 1000,
+   "matrix": {
+    "id": "mutagen",
+    "stat": 4,
+    "statName": "Food"
+   }
+  },
+  {
+   "key": "mutagen5",
+   "file": "game",
+   "ini": "MutagenLevelBoost[5]",
+   "kind": "int",
+   "official": 0,
+   "group": "stats",
+   "label": "Water: mutagen level points (wild)",
+   "min": 0,
+   "max": 1000,
+   "matrix": {
+    "id": "mutagen",
+    "stat": 5,
+    "statName": "Water"
+   }
+  },
+  {
+   "key": "mutagen6",
+   "file": "game",
+   "ini": "MutagenLevelBoost[6]",
+   "kind": "int",
+   "official": 0,
+   "group": "stats",
+   "label": "Temperature: mutagen level points (wild)",
+   "min": 0,
+   "max": 1000,
+   "matrix": {
+    "id": "mutagen",
+    "stat": 6,
+    "statName": "Temperature"
+   }
+  },
+  {
+   "key": "mutagen7",
+   "file": "game",
+   "ini": "MutagenLevelBoost[7]",
+   "kind": "int",
+   "official": 5,
+   "group": "stats",
+   "label": "Weight: mutagen level points (wild)",
+   "min": 0,
+   "max": 1000,
+   "matrix": {
+    "id": "mutagen",
+    "stat": 7,
+    "statName": "Weight"
+   }
+  },
+  {
+   "key": "mutagen8",
+   "file": "game",
+   "ini": "MutagenLevelBoost[8]",
+   "kind": "int",
+   "official": 5,
+   "group": "stats",
+   "label": "Melee Damage: mutagen level points (wild)",
+   "min": 0,
+   "max": 1000,
+   "matrix": {
+    "id": "mutagen",
+    "stat": 8,
+    "statName": "Melee Damage"
+   }
+  },
+  {
+   "key": "mutagen9",
+   "file": "game",
+   "ini": "MutagenLevelBoost[9]",
+   "kind": "int",
+   "official": 0,
+   "group": "stats",
+   "label": "Movement Speed: mutagen level points (wild)",
+   "min": 0,
+   "max": 1000,
+   "matrix": {
+    "id": "mutagen",
+    "stat": 9,
+    "statName": "Movement Speed"
+   }
+  },
+  {
+   "key": "mutagen10",
+   "file": "game",
+   "ini": "MutagenLevelBoost[10]",
+   "kind": "int",
+   "official": 0,
+   "group": "stats",
+   "label": "Fortitude: mutagen level points (wild)",
+   "min": 0,
+   "max": 1000,
+   "matrix": {
+    "id": "mutagen",
+    "stat": 10,
+    "statName": "Fortitude"
+   }
+  },
+  {
+   "key": "mutagen11",
+   "file": "game",
+   "ini": "MutagenLevelBoost[11]",
+   "kind": "int",
+   "official": 0,
+   "group": "stats",
+   "label": "Crafting Speed: mutagen level points (wild)",
+   "min": 0,
+   "max": 1000,
+   "matrix": {
+    "id": "mutagen",
+    "stat": 11,
+    "statName": "Crafting Speed"
+   }
+  },
+  {
+   "key": "mutagenBred0",
+   "file": "game",
+   "ini": "MutagenLevelBoost_Bred[0]",
+   "kind": "int",
+   "official": 1,
+   "group": "stats",
+   "label": "Health: mutagen level points (bred)",
+   "min": 0,
+   "max": 1000,
+   "matrix": {
+    "id": "mutagenBred",
+    "stat": 0,
+    "statName": "Health"
+   }
+  },
+  {
+   "key": "mutagenBred1",
+   "file": "game",
+   "ini": "MutagenLevelBoost_Bred[1]",
+   "kind": "int",
+   "official": 1,
+   "group": "stats",
+   "label": "Stamina: mutagen level points (bred)",
+   "min": 0,
+   "max": 1000,
+   "matrix": {
+    "id": "mutagenBred",
+    "stat": 1,
+    "statName": "Stamina"
+   }
+  },
+  {
+   "key": "mutagenBred2",
+   "file": "game",
+   "ini": "MutagenLevelBoost_Bred[2]",
+   "kind": "int",
+   "official": 0,
+   "group": "stats",
+   "label": "Torpidity: mutagen level points (bred)",
+   "min": 0,
+   "max": 1000,
+   "matrix": {
+    "id": "mutagenBred",
+    "stat": 2,
+    "statName": "Torpidity"
+   }
+  },
+  {
+   "key": "mutagenBred3",
+   "file": "game",
+   "ini": "MutagenLevelBoost_Bred[3]",
+   "kind": "int",
+   "official": 0,
+   "group": "stats",
+   "label": "Oxygen: mutagen level points (bred)",
+   "min": 0,
+   "max": 1000,
+   "matrix": {
+    "id": "mutagenBred",
+    "stat": 3,
+    "statName": "Oxygen"
+   }
+  },
+  {
+   "key": "mutagenBred4",
+   "file": "game",
+   "ini": "MutagenLevelBoost_Bred[4]",
+   "kind": "int",
+   "official": 0,
+   "group": "stats",
+   "label": "Food: mutagen level points (bred)",
+   "min": 0,
+   "max": 1000,
+   "matrix": {
+    "id": "mutagenBred",
+    "stat": 4,
+    "statName": "Food"
+   }
+  },
+  {
+   "key": "mutagenBred5",
+   "file": "game",
+   "ini": "MutagenLevelBoost_Bred[5]",
+   "kind": "int",
+   "official": 0,
+   "group": "stats",
+   "label": "Water: mutagen level points (bred)",
+   "min": 0,
+   "max": 1000,
+   "matrix": {
+    "id": "mutagenBred",
+    "stat": 5,
+    "statName": "Water"
+   }
+  },
+  {
+   "key": "mutagenBred6",
+   "file": "game",
+   "ini": "MutagenLevelBoost_Bred[6]",
+   "kind": "int",
+   "official": 0,
+   "group": "stats",
+   "label": "Temperature: mutagen level points (bred)",
+   "min": 0,
+   "max": 1000,
+   "matrix": {
+    "id": "mutagenBred",
+    "stat": 6,
+    "statName": "Temperature"
+   }
+  },
+  {
+   "key": "mutagenBred7",
+   "file": "game",
+   "ini": "MutagenLevelBoost_Bred[7]",
+   "kind": "int",
+   "official": 1,
+   "group": "stats",
+   "label": "Weight: mutagen level points (bred)",
+   "min": 0,
+   "max": 1000,
+   "matrix": {
+    "id": "mutagenBred",
+    "stat": 7,
+    "statName": "Weight"
+   }
+  },
+  {
+   "key": "mutagenBred8",
+   "file": "game",
+   "ini": "MutagenLevelBoost_Bred[8]",
+   "kind": "int",
+   "official": 1,
+   "group": "stats",
+   "label": "Melee Damage: mutagen level points (bred)",
+   "min": 0,
+   "max": 1000,
+   "matrix": {
+    "id": "mutagenBred",
+    "stat": 8,
+    "statName": "Melee Damage"
+   }
+  },
+  {
+   "key": "mutagenBred9",
+   "file": "game",
+   "ini": "MutagenLevelBoost_Bred[9]",
+   "kind": "int",
+   "official": 0,
+   "group": "stats",
+   "label": "Movement Speed: mutagen level points (bred)",
+   "min": 0,
+   "max": 1000,
+   "matrix": {
+    "id": "mutagenBred",
+    "stat": 9,
+    "statName": "Movement Speed"
+   }
+  },
+  {
+   "key": "mutagenBred10",
+   "file": "game",
+   "ini": "MutagenLevelBoost_Bred[10]",
+   "kind": "int",
+   "official": 0,
+   "group": "stats",
+   "label": "Fortitude: mutagen level points (bred)",
+   "min": 0,
+   "max": 1000,
+   "matrix": {
+    "id": "mutagenBred",
+    "stat": 10,
+    "statName": "Fortitude"
+   }
+  },
+  {
+   "key": "mutagenBred11",
+   "file": "game",
+   "ini": "MutagenLevelBoost_Bred[11]",
+   "kind": "int",
+   "official": 0,
+   "group": "stats",
+   "label": "Crafting Speed: mutagen level points (bred)",
+   "min": 0,
+   "max": 1000,
+   "matrix": {
+    "id": "mutagenBred",
+    "stat": 11,
+    "statName": "Crafting Speed"
+   }
+  }
+ ]
+}

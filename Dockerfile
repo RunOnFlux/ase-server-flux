@@ -19,7 +19,7 @@ RUN apt-get update -y && \
     apt-get install -y --no-install-recommends ca-certificates curl procps tzdata python3 && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-COPY scripts/flux-lib.sh scripts/flux-entrypoint.sh scripts/fluxase.py /opt/flux/
+COPY scripts/flux-lib.sh scripts/flux-entrypoint.sh scripts/fluxase.py scripts/catalog.json /opt/flux/
 RUN chmod 0755 /opt/flux/*.sh /opt/flux/fluxase.py && ln -s /opt/flux/fluxase.py /usr/local/bin/flux-ase
 
 RUN steamcmd +quit >/dev/null 2>&1; test -d /root/.local/share/Steam
