@@ -91,6 +91,14 @@ transfers between this server's maps (`mapTransfers`: a one-server cluster in `S
 
 ## Versions
 
+- **1.1.1** (2026-11-16): a Workshop mod that "the download failed" on every start now downloads.
+  - SteamCMD refuses an item whose entry in `appworkshop_346110.acf` is stuck at `BytesDownloaded 0`, and the
+    entry survives a restart and a delete + re-add of the mod (3 tickets, 29 Oct to 16 Nov). After a failed
+    attempt `sync-mods` moves the whole acf to `appworkshop_346110.acf.stuck`, asks again only for the mods still
+    missing, and keeps the versions SteamCMD had recorded.
+  - The log line for a failed download now carries SteamCMD's own `ERROR!` line (it was the `Starting` line of
+    steamcmd.sh).
+
 - **1.1.0** (2026-11-01): every ARK option the hub can set.
   - `scripts/catalog.json` is the one list of 280 `GameUserSettings.ini` / `Game.ini` settings, taken from
     ark.wiki.gg/wiki/Server_configuration (ASE column), including the indexed per-level stat keys

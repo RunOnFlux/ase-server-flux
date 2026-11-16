@@ -918,19 +918,40 @@ def cmd_sync_mods():
                 continue
             wanted.append(i)
     log_tail = ""
+    saved_acf = {}
     if wanted:
         print(f"# Workshop: downloading {len(wanted)} of {len(ids)} mod(s)")
-        cmd = ["steamcmd", "+force_install_dir", WORKSHOP, "+login", "anonymous"]
-        for i in wanted:
-            cmd += ["+workshop_download_item", "346110", i]
+        def steamcmd_cmd(items):
+            cmd = ["steamcmd", "+force_install_dir", WORKSHOP, "+login", "anonymous"]
+            for i in items:
+                cmd += ["+workshop_download_item", "346110", i]
+            return cmd + ["+quit"]
         for attempt in range(3):
-            r = subprocess.run(cmd + ["+quit"], capture_output=True, text=True)
-            log_tail = "\n".join(l for l in (r.stdout + r.stderr).splitlines() if l.strip())[-600:]
-            if all(os.path.isdir(os.path.join(WORKSHOP_CONTENT, i)) for i in wanted):
+            # The first attempt asks for everything wanted (as before); a retry only for what is still missing.
+            todo = wanted if attempt == 0 else [i for i in wanted if not os.path.isdir(os.path.join(WORKSHOP_CONTENT, i))]
+            r = subprocess.run(steamcmd_cmd(todo), capture_output=True, text=True)
+            out = r.stdout + "\n" + r.stderr
+            errors = [l.strip() for l in r.stdout.splitlines() if "ERROR" in l]
+            log_tail = errors[-1] if errors else "\n".join(l for l in out.splitlines() if l.strip())[-600:]
+            missing = [i for i in wanted if not os.path.isdir(os.path.join(WORKSHOP_CONTENT, i))]
+            if not missing:
                 break
-            print(f"# WARN steamcmd attempt {attempt + 1}/3 left {sum(not os.path.isdir(os.path.join(WORKSHOP_CONTENT, i)) for i in wanted)} mod(s) missing")
+            print(f"# WARN steamcmd attempt {attempt + 1}/3 left {len(missing)} mod(s) missing")
+            # An entry SteamCMD left stuck in its acf (BytesDownloaded 0) makes every later
+            # download of that item fail ("Download item failed"), and a deleted mod's entry
+            # survives. Moving the whole file aside is what clears it: SteamCMD rebuilds it, and
+            # the versions on disk come from Mods/<id>/__flux_version__, not from the acf.
+            if attempt < 2:
+                saved_acf.update(workshop_installed())
+                if os.path.exists(WORKSHOP_ACF):
+                    # The first (stuck) file is the one worth keeping; later ones are only rebuilt copies.
+                    if os.path.exists(WORKSHOP_ACF + ".stuck"):
+                        os.remove(WORKSHOP_ACF)
+                    else:
+                        os.replace(WORKSHOP_ACF, WORKSHOP_ACF + ".stuck")
+                    print("# WARN steamcmd's download record moved aside before the retry")
             time.sleep(5)
-    acf = workshop_installed()
+    acf = {**saved_acf, **workshop_installed()} if wanted else workshop_installed()
     for i in ids:
         d = details.get(i) or {}
         latest = int(d.get("time_updated") or 0)

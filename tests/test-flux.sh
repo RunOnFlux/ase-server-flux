@@ -105,6 +105,51 @@ check "the .mod file names the mod and its path" "0" "$(status bash -c "grep -aq
 check "and carries its map" "0" "$(status grep -aq 'MyMap' "${tmp}/Mods/999.mod")"
 check "the .mod starts with the id" "999" "$(python3 -c 'import struct,sys;print(struct.unpack("<Q", open(sys.argv[1],"rb").read(8))[0])' "${tmp}/Mods/999.mod")"
 
+# A Workshop download that SteamCMD refuses because its acf holds the item stuck at
+# BytesDownloaded 0 (seen on real servers, 3 tickets): the stand-in fails exactly then, like the
+# real one ("ERROR! Download item failed"), and works on a clean acf.
+mkdir -p "${tmp}/bin"
+cat >"${tmp}/bin/steamcmd" <<'STUB'
+#!/bin/bash
+dir=""; ids=()
+while [ $# -gt 0 ]; do
+  case "$1" in +force_install_dir) dir="$2" ;; +workshop_download_item) ids+=("$3") ;; esac
+  shift
+done
+acf="${dir}/steamapps/workshop/appworkshop_346110.acf"
+echo "Redirecting stderr to something"
+for id in "${ids[@]}"; do
+  if [ "${id}" = "222" ]; then echo "ERROR! Download item ${id} failed (Failure)."; continue; fi
+  if [ -f "${acf}" ] && grep -q '"BytesDownloaded"[[:space:]]*"0"' "${acf}"; then
+    echo "ERROR! Download item ${id} failed (Failure)."
+    continue
+  fi
+  c="${dir}/steamapps/workshop/content/346110/${id}/WindowsNoEditor"
+  mkdir -p "${c}"
+  python3 -c 'import struct,sys;n=b"M\0";open(sys.argv[1],"wb").write(struct.pack("<I",len(n))+n+struct.pack("<I",0))' "${c}/mod.info"
+  printf '"AppWorkshop"\n{\n\t"WorkshopItemsInstalled"\n\t{\n\t\t"%s"\n\t\t{\n\t\t\t"timeupdated"\t\t"1569251451"\n\t\t}\n\t}\n}\n' "${id}" >"${acf}"
+  echo "Success. Downloaded item ${id}"
+done
+STUB
+chmod +x "${tmp}/bin/steamcmd"
+wsacf="${tmp}/server/workshop/steamapps/workshop/appworkshop_346110.acf"
+mkdir -p "$(dirname "${wsacf}")"
+printf '"AppWorkshop"\n{\n\t"WorkshopItemDetails"\n\t{\n\t\t"1236583890"\n\t\t{\n\t\t\t"BytesDownloaded"\t\t"0"\n\t\t\t"BytesToDownload"\t\t"8955504"\n\t\t}\n\t}\n}\n' >"${wsacf}"
+ase PATH="${tmp}/bin:${PATH}" ASE_MODS=1236583890 sync-mods >"${tmp}/sync.out" 2>&1
+check "a download SteamCMD refuses on a stuck acf entry is retried on a clean one and unpacks" "0" "$(status test -f "${tmp}/server/ShooterGame/Content/Mods/1236583890.mod")"
+check "the stuck acf is kept aside, not deleted" "0" "$(status test -f "${wsacf}.stuck")"
+check "and the sync says so" "1" "$(grep -c 'moved aside before the retry' "${tmp}/sync.out")"
+rm -rf "${tmp}/server/ShooterGame/Content/Mods" "${tmp}/server/workshop"
+# Two mods, one of them never downloads: the other still installs, the ORIGINAL stuck acf is what stays aside
+# (a later rebuilt copy does not replace it), and the failure keeps its exact text.
+mkdir -p "$(dirname "${wsacf}")"
+printf '"AppWorkshop"\n{\n\t"WorkshopItemDetails"\n\t{\n\t\t"1236583890"\n\t\t{\n\t\t\t"BytesDownloaded"\t\t"0"\n\t\t}\n\t}\n}\n' >"${wsacf}"
+ase PATH="${tmp}/bin:${PATH}" ASE_MODS=1236583890,222 sync-mods >"${tmp}/sync2.out" 2>&1
+check "with one mod that never downloads, the other installs" "0" "$(status test -f "${tmp}/server/ShooterGame/Content/Mods/1236583890.mod")"
+check "the original stuck acf stays aside" "1" "$(grep -c 'BytesDownloaded' "${wsacf}.stuck")"
+check "the failure text is unchanged" "1" "$(grep -c 'mod 222: the download failed; steamcmd said: ERROR! Download item 222 failed' "${tmp}/sync2.out")"
+rm -rf "${tmp}/server/ShooterGame/Content/Mods" "${tmp}/server/workshop"
+
 # RCON replies.
 py() { PYTHONPATH=scripts python3 -c "import fluxase as t; $1"; }
 check "no players" "[]" "$(py 'print(t.parse_players("No Players Connected \n "))')"
