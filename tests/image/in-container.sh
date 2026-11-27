@@ -35,11 +35,31 @@ check "the unit tests pass with the image's Python" "0" "$(status bash -c 'cd /t
 # SaveWorld, Broadcast), a save file on SaveWorld and on SIGINT, then a hang like ARK's.
 cat >/usr/local/bin/steamcmd <<'STUB'
 #!/bin/bash
+all=("$@")
 dir=""
 while [ $# -gt 0 ]; do [ "$1" = "+force_install_dir" ] && dir="$2"; shift; done
+set -- "${all[@]}"
+echo "$*" >>/tmp/steamcmd-calls
+case " $* " in
+  *" +app_info_print "*)
+    # the branches Steam lists: public, and a password-free beta
+    printf '"376030"\n{\n\t"depots"\n\t{\n\t\t"branches"\n\t\t{\n\t\t\t"public"\n\t\t\t{\n\t\t\t\t"buildid"\t\t"100"\n\t\t\t}\n\t\t\t"preaquatica"\n\t\t\t{\n\t\t\t\t"buildid"\t\t"50"\n\t\t\t}\n\t\t}\n\t}\n}\n'
+    exit 0 ;;
+esac
 [ -n "${dir}" ] || exit 0
 mkdir -p "${dir}/ShooterGame/Binaries/Linux" "${dir}/steamapps"
-printf '"AppState"\n{\n\t"buildid"\t\t"100"\n}\n' >"${dir}/steamapps/appmanifest_376030.acf"
+# -beta <branch> is remembered by the install (BetaKey), as SteamCMD does; -beta public clears it
+acf="${dir}/steamapps/appmanifest_376030.acf"
+beta="$(grep -o 'BetaKey"[^"]*"[^"]*"' "${acf}" 2>/dev/null | head -1 | cut -d'"' -f4)"
+args=("$@")
+for i in "${!args[@]}"; do [ "${args[$i]}" = "-beta" ] && beta="${args[$((i + 1))]}"; done
+[ "${beta}" = "public" ] && beta=""
+build=100; [ "${beta}" = "preaquatica" ] && build=50
+if [ -n "${beta}" ]; then
+  printf '"AppState"\n{\n\t"buildid"\t\t"%s"\n\t"UserConfig"\n\t{\n\t\t"BetaKey"\t\t"%s"\n\t}\n\t"MountedConfig"\n\t{\n\t\t"BetaKey"\t\t"%s"\n\t}\n}\n' "${build}" "${beta}" "${beta}" >"${acf}"
+else
+  printf '"AppState"\n{\n\t"buildid"\t\t"%s"\n\t"UserConfig"\n\t{\n\t\t"BetaKey"\t\t"public"\n\t}\n\t"MountedConfig"\n\t{\n\t}\n}\n' "${build}" >"${acf}"
+fi
 cat >"${dir}/ShooterGame/Binaries/Linux/ShooterGameServer" <<'GAME'
 #!/usr/bin/python3
 import os, re, signal, socket, struct, sys, threading, time
@@ -105,6 +125,36 @@ flux-ase restart >/dev/null
 check "a panel launch flag and a free one are on the server's command line" "0" "$(status wait_for 'pgrep -af "ShooterGameServer " | grep -q -- "-ForceAllowCaveFlyers.*-UseVivox" && grep -q "\"running\"" ${data}/flux/state.json' 60)"
 check "and the supervisor's own flags are still there" "1" "$(pgrep -af 'ShooterGameServer ' | grep -c -- '-server -log -NoBattlEye')"
 check "a backup on the second start" "0" "$(status wait_for 'ls ${data}/flux/backups/*-ark.tar.gz' 5)"
+
+on_branch() { [ "$(flux-ase status 2>/dev/null | python3 -c 'import json,sys;print(json.load(sys.stdin)["branch"])' 2>/dev/null)" = "$1" ] && grep -q '"running"' "${data}/flux/state.json"; }
+
+# The Steam branch: nothing on the SteamCMD line by default; a branch saved in the panel is
+# installed (and remembered) on the next start; one Steam does not list changes nothing; public
+# is asked for explicitly to leave a beta.
+check "by default no -beta is on the SteamCMD line" "0" "$(grep -c -- '-beta' /tmp/steamcmd-calls)"
+check "the status names the branch" "public" "$(flux-ase status | python3 -c 'import json,sys;print(json.load(sys.stdin)["branch"])')"
+flux-ase set-settings '{"steamBranch": "preaquatica"}' >/dev/null
+flux-ase restart >/dev/null
+check "a saved beta branch is installed on the next start" "0" "$(status wait_for 'on_branch preaquatica' 90)"
+check "with -beta on the SteamCMD line" "1" "$(grep -c -- '+app_update 376030 -beta preaquatica +app_update 376030 -beta preaquatica' /tmp/steamcmd-calls)"
+check "and the status reports it" "preaquatica 50" "$(flux-ase status | python3 -c 'import json,sys;d=json.load(sys.stdin);print(d["branch"], d["build"])')"
+flux-ase set-settings '{"steamBranch": "nonexistent"}' >/dev/null
+flux-ase restart >/dev/null
+check "a branch Steam does not have is refused and the server stays where it is" "0" "$(status wait_for 'grep -q "no branch .nonexistent. for this server" ${logf} && grep -q "\"running\"" ${data}/flux/state.json' 90)"
+check "still on the beta it was on" "preaquatica" "$(flux-ase status | python3 -c 'import json,sys;print(json.load(sys.stdin)["branch"])')"
+flux-ase set-settings '{"steamBranch": "public"}' >/dev/null
+flux-ase restart >/dev/null
+check "back to public (-beta public) on the next start" "0" "$(status wait_for 'on_branch public' 90)"
+check "the install is on the public build again" "public 100" "$(flux-ase status | python3 -c 'import json,sys;d=json.load(sys.stdin);print(d["branch"], d["build"])')"
+check "and -beta public was asked for explicitly" "1" "$([ "$(grep -c -- '-beta public' /tmp/steamcmd-calls)" -ge 1 ] && echo 1 || echo 0)"
+
+# A switch that never finished (SteamCMD was asked for a beta, the files are still public) is not finished by
+# a plain update when the setting says public: the update names -beta public.
+calls_before="$(grep -c -- '-beta public' /tmp/steamcmd-calls)"
+export calls_before  # read by the eval in wait_for
+printf '"AppState"\n{\n\t"buildid"\t\t"100"\n\t"UserConfig"\n\t{\n\t\t"BetaKey"\t\t"preaquatica"\n\t}\n\t"MountedConfig"\n\t{\n\t}\n}\n' >/mnt/ase/server/steamapps/appmanifest_376030.acf
+flux-ase restart >/dev/null
+check "an unfinished switch is undone with -beta public, not finished by a plain update" "0" "$(status wait_for '[ "$(grep -c -- "-beta public" /tmp/steamcmd-calls)" -gt "${calls_before}" ] && on_branch public' 90)"
 
 # A restore while running: the server saves, a safety backup is taken, the archive replaces the
 # saves, the server comes back.

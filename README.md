@@ -91,6 +91,18 @@ transfers between this server's maps (`mapTransfers`: a one-server cluster in `S
 
 ## Versions
 
+- **1.2.0** (2026-11-27): the game can run on a Steam beta branch, such as `preaquatica` (the build before the Aquatica update).
+  - `flux-ase set-settings '{"steamBranch": "preaquatica"}'` (the hub's Game Version card does this); `public`, blank or
+    null is the default. It is kept in `settings.json`, so it needs no spec update and applies on the next start.
+  - The SteamCMD line gets `-beta <branch>` on both `app_update`s only for a beta; on the default it is byte for byte
+    what it was. SteamCMD remembers an install's branch, so leaving a beta passes `-beta public` explicitly.
+  - A branch Steam does not list (or that needs a password: only anonymous login) is not tried five times: the start says
+    so and the install stays where it is. After the update the install's `BetaKey` must be the wanted branch, else it
+    counts as a failed attempt.
+  - The 30-minute update check compares with the branch the install is on, not always `public`.
+  - `flux-ase status` reports `branch` (installed) and `wantedBranch`; `flux-ase settings` reports `steamBranch` and
+    `installedBranch`. The hub shows the card only when `steamBranch` is there.
+  - Going back to an older build with a world saved by a newer one may not load: take a backup first.
 - **1.1.1** (2026-11-16): a Workshop mod that "the download failed" on every start now downloads.
   - SteamCMD refuses an item whose entry in `appworkshop_346110.acf` is stuck at `BytesDownloaded 0`, and the
     entry survives a restart and a delete + re-add of the mod (3 tickets, 29 Oct to 16 Nov). After a failed

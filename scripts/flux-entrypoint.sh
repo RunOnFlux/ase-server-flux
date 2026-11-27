@@ -100,25 +100,51 @@ term_handler() {
 trap term_handler TERM INT
 
 update_server() {
-  local attempt validate
+  local attempt validate want have req info got beta=()
+  want="$(ase steam-branch)"
+  have="$(ase steam-branch installed)"
+  req="$(ase steam-branch requested)"
   if flux_truthy "${SKIP_UPDATE:-}" && [ -x "${s}/${FLUX_GAME_BINARY}" ]; then
     flux_log "SKIP_UPDATE is set: not updating the server files"
+    [ "${want}" != "${have}" ] && flux_log "WARN the Steam branch is set to '${want}' but the install is on '${have}': SKIP_UPDATE keeps it there"
     return 0
   fi
   ase state updating "Downloading the server from Steam (about 23 GB the first time)"
-  flux_log "updating the server from Steam (app ${FLUX_STEAM_APP})"
+  # The Steam branch. Public (the default) adds nothing to the SteamCMD line, as before. A beta branch
+  # is checked first: one Steam does not list, or that needs a password, would only fail five times
+  # (anonymous login), so the server stays on the branch it is on and says so. Leaving a beta needs an
+  # explicit -beta public: SteamCMD remembers the branch of an install.
+  if [ "${want}" != "public" ]; then
+    info="$(steamcmd +login anonymous +app_info_update 1 +app_info_print "${FLUX_STEAM_APP}" +quit 2>/dev/null)"
+    if [ -z "$(flux_public_build "${want}" <<<"${info}")" ]; then
+      flux_log "WARN Steam has no branch '${want}' for this server (or it needs a password, or Steam could not be read): staying on '${have}'"
+      want="${have}"
+    fi
+  fi
+  # A beta is named. The default names nothing, unless the install is on a beta or was last ASKED for
+  # one (an update that never finished: a plain app_update would finish that switch, not undo it).
+  if [ "${want}" != "public" ]; then
+    beta=(-beta "${want}")
+  elif [ "${have}" != "public" ] || [ "${req}" != "public" ]; then
+    beta=(-beta public)
+  fi
+  flux_log "updating the server from Steam (app ${FLUX_STEAM_APP}, branch ${want})"
   validate=""
   for attempt in 1 2 3 4 5; do
     # shellcheck disable=SC2086  # validate is "" or "validate"
     # app_info_update + a second app_update: SteamCMD answers "Missing configuration" to a first
     # app_update now and then (measured with this app and the ATS server).
-    if steamcmd +force_install_dir "${s}" +login anonymous +app_info_update 1 +app_update "${FLUX_STEAM_APP}" +app_update "${FLUX_STEAM_APP}" ${validate} +quit >/tmp/steamcmd.log 2>&1; then
-      flux_log "server build $(flux_installed_build "${s}/steamapps/appmanifest_${FLUX_STEAM_APP}.acf")"
+    # When a branch was named, the install must end up on it: a run that exits 0 on another one is a
+    # failure. The default path (no -beta) is judged by SteamCMD's exit code alone, as before.
+    if steamcmd +force_install_dir "${s}" +login anonymous +app_info_update 1 +app_update "${FLUX_STEAM_APP}" "${beta[@]}" +app_update "${FLUX_STEAM_APP}" "${beta[@]}" ${validate} +quit >/tmp/steamcmd.log 2>&1 \
+      && { [ "${#beta[@]}" = "0" ] || [ "$(ase steam-branch installed)" = "${want}" ]; }; then
+      flux_log "server build $(flux_installed_build "${s}/steamapps/appmanifest_${FLUX_STEAM_APP}.acf") (branch ${want})"
       return 0
     fi
     [ "${terminating}" = "1" ] && return 1
     validate="validate"
-    flux_log "WARN steamcmd failed (attempt ${attempt}/5): $(grep -aE 'ERROR|Error|error' /tmp/steamcmd.log | tail -1 | tr -d '\r')); retrying in 5s with validate"
+    got="$(ase steam-branch installed)"
+    flux_log "WARN steamcmd failed (attempt ${attempt}/5): $(grep -aE 'ERROR|Error|error' /tmp/steamcmd.log | tail -1 | tr -d '\r')${got:+ [install on branch ${got}, wanted ${want}]}; retrying in 5s with validate"
     sleep 5
   done
   if [ -x "${s}/${FLUX_GAME_BINARY}" ]; then
@@ -236,7 +262,7 @@ watcher() {
     if [ "${FLUX_UPDATE_CHECK_MINUTES}" -gt 0 ] 2>/dev/null && [ $((now - last_check)) -ge $((FLUX_UPDATE_CHECK_MINUTES * 60)) ]; then
       last_check="${now}"
       build="$(flux_installed_build "${s}/steamapps/appmanifest_${FLUX_STEAM_APP}.acf")"
-      public="$(steamcmd +login anonymous +app_info_update 1 +app_info_print "${FLUX_STEAM_APP}" +quit 2>/dev/null | flux_public_build public)"
+      public="$(steamcmd +login anonymous +app_info_update 1 +app_info_print "${FLUX_STEAM_APP}" +quit 2>/dev/null | flux_public_build "$(ase steam-branch installed)")"
       if [ -n "${public}" ] && [ -n "${build}" ] && [ "${public}" != "${build}" ] && ase update-due "${build}" "${public}"; then
         restart_with_warning "planned: game update ${build} -> ${public}" "a game update"
         exit 0
