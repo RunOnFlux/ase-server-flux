@@ -134,9 +134,10 @@ update_server() {
     # shellcheck disable=SC2086  # validate is "" or "validate"
     # app_info_update + a second app_update: SteamCMD answers "Missing configuration" to a first
     # app_update now and then (measured with this app and the ATS server).
-    # The install must end up on the wanted branch: a run that exits 0 on another one is a failure.
+    # When a branch was named, the install must end up on it: a run that exits 0 on another one is a
+    # failure. The default path (no -beta) is judged by SteamCMD's exit code alone, as before.
     if steamcmd +force_install_dir "${s}" +login anonymous +app_info_update 1 +app_update "${FLUX_STEAM_APP}" "${beta[@]}" +app_update "${FLUX_STEAM_APP}" "${beta[@]}" ${validate} +quit >/tmp/steamcmd.log 2>&1 \
-      && [ "$(ase steam-branch installed)" = "${want}" ]; then
+      && { [ "${#beta[@]}" = "0" ] || [ "$(ase steam-branch installed)" = "${want}" ]; }; then
       flux_log "server build $(flux_installed_build "${s}/steamapps/appmanifest_${FLUX_STEAM_APP}.acf") (branch ${want})"
       return 0
     fi
