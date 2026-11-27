@@ -180,13 +180,22 @@ flux_installed_build() {
   awk -F'"' '$2 == "buildid" { print $4; exit }' "$1"
 }
 
-# stdin = steamcmd +app_info_print output. Prints the public branch's buildid.
-# $1 = the branch (default public).
+# stdin = steamcmd +app_info_print output. Prints the buildid of branch $1 (default public), and
+# nothing when Steam lists no such branch or it needs a password. Only the keys of the "branches"
+# block count (depth 1): a branch's own fields (buildid, description, timeupdated...) are not branches.
 flux_public_build() {
   awk -v want="\"${1:-public}\"" '
-    /"branches"/ { inb = 1 }
-    inb && $1 == want { inp = 1 }
-    inp && /"buildid"/ { gsub(/"/, "", $2); print $2; exit }
+    /"branches"/ { inb = 1; depth = 0; next }
+    inb && /\{/ { depth++; next }
+    inb && /\}/ {
+      depth--
+      if (inp && depth == 1) { if (!pw && build != "") { print build; exit } inp = 0; pw = 0; build = "" }
+      if (depth <= 0) inb = 0
+      next
+    }
+    inb && depth == 1 && $1 == want { inp = 1; next }
+    inb && inp && depth == 2 && $1 == "\"buildid\"" { gsub(/"/, "", $2); build = $2 }
+    inb && inp && depth == 2 && $1 == "\"pwdrequired\"" { gsub(/"/, "", $2); if ($2 != "0") pw = 1 }
   '
 }
 

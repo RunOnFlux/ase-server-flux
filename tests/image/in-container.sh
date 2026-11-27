@@ -148,6 +148,14 @@ check "back to public (-beta public) on the next start" "0" "$(status wait_for '
 check "the install is on the public build again" "public 100" "$(flux-ase status | python3 -c 'import json,sys;d=json.load(sys.stdin);print(d["branch"], d["build"])')"
 check "and -beta public was asked for explicitly" "1" "$([ "$(grep -c -- '-beta public' /tmp/steamcmd-calls)" -ge 1 ] && echo 1 || echo 0)"
 
+# A switch that never finished (SteamCMD was asked for a beta, the files are still public) is not finished by
+# a plain update when the setting says public: the update names -beta public.
+calls_before="$(grep -c -- '-beta public' /tmp/steamcmd-calls)"
+export calls_before  # read by the eval in wait_for
+printf '"AppState"\n{\n\t"buildid"\t\t"100"\n\t"UserConfig"\n\t{\n\t\t"BetaKey"\t\t"preaquatica"\n\t}\n\t"MountedConfig"\n\t{\n\t}\n}\n' >/mnt/ase/server/steamapps/appmanifest_376030.acf
+flux-ase restart >/dev/null
+check "an unfinished switch is undone with -beta public, not finished by a plain update" "0" "$(status wait_for '[ "$(grep -c -- "-beta public" /tmp/steamcmd-calls)" -gt "${calls_before}" ] && on_branch public' 90)"
+
 # A restore while running: the server saves, a safety backup is taken, the archive replaces the
 # saves, the server comes back.
 echo before-restore >"${data}/Saved/SavedArks/Ragnarok/marker.txt"

@@ -20,7 +20,7 @@ commands.
     flux-ase restart                   save, stop and start again
     flux-ase pending                   exit 0 when settings, mods or a restore wait for a restart
     fluxase.py steam-branch [installed]  the Steam branch the server follows (settings.json "steamBranch",
-                                       default public), or the one the install is on (appmanifest BetaKey)
+                                       default public), or the one the install is on (appmanifest BetaKey; "requested" = the one SteamCMD was last asked for)
 
 THE RCON IS NOT PUBLISHED: Source RCON on 127.0.0.1, reached by the hub's exec. The admin password
 (also the in-game `enablecheats` password) is the RCON password.
@@ -1100,7 +1100,9 @@ DEFAULT_BRANCH = "public"
 def coerce_branch(value):
     """A branch name as typed: DEFAULT_BRANCH for none/blank/'public', else the name; ValueError when it
     could not be a Steam branch (it ends up on SteamCMD's command line)."""
-    text = "" if value is None else str(value).strip()
+    if value is not None and not isinstance(value, str):
+        raise ValueError("steamBranch is a branch name (text)")
+    text = "" if value is None else value.strip()
     if text == "" or text.lower() == DEFAULT_BRANCH:
         return DEFAULT_BRANCH
     if not STEAM_BRANCH_RE.match(text):
@@ -1115,25 +1117,26 @@ def wanted_branch():
         return DEFAULT_BRANCH
 
 
-def installed_branch():
+def installed_branch(kind="installed"):
     """The branch the files on disk are from: the appmanifest's MountedConfig BetaKey. NOT UserConfig,
     which holds the branch SteamCMD was ASKED for and already says so during (or after a failed) switch
     (measured 2026-11-27: mid-download UserConfig was public, MountedConfig still preaquatica). A manifest
     with a MountedConfig and no key there is public; one with no MountedConfig at all falls back to
-    UserConfig; none is public."""
+    UserConfig; none is public. kind="requested" reads UserConfig: a plain app_update FOLLOWS it, so a
+    switch that never finished is finished by an update that names no branch."""
     try:
         text = open(os.path.join(SERVER_DIR, "steamapps", "appmanifest_376030.acf"), encoding="utf-8", errors="replace").read()
     except OSError:
         return DEFAULT_BRANCH
     mounted = re.search(r'"MountedConfig"\s*\{([^}]*)\}', text)
     user = re.search(r'"UserConfig"\s*\{([^}]*)\}', text)
-    block = mounted or user
+    block = user if kind == "requested" else (mounted or user)
     m = re.search(r'"BetaKey"\s+"([^"]*)"', block.group(1)) if block else None
     return m.group(1) if m and m.group(1) else DEFAULT_BRANCH
 
 
 def cmd_steam_branch(which="wanted"):
-    print(installed_branch() if which == "installed" else wanted_branch())
+    print(installed_branch(which) if which in ("installed", "requested") else wanted_branch())
 
 
 def game_version():

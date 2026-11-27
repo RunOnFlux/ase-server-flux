@@ -100,9 +100,10 @@ term_handler() {
 trap term_handler TERM INT
 
 update_server() {
-  local attempt validate want have info got beta=()
+  local attempt validate want have req info got beta=()
   want="$(ase steam-branch)"
   have="$(ase steam-branch installed)"
+  req="$(ase steam-branch requested)"
   if flux_truthy "${SKIP_UPDATE:-}" && [ -x "${s}/${FLUX_GAME_BINARY}" ]; then
     flux_log "SKIP_UPDATE is set: not updating the server files"
     [ "${want}" != "${have}" ] && flux_log "WARN the Steam branch is set to '${want}' but the install is on '${have}': SKIP_UPDATE keeps it there"
@@ -115,14 +116,16 @@ update_server() {
   # explicit -beta public: SteamCMD remembers the branch of an install.
   if [ "${want}" != "public" ]; then
     info="$(steamcmd +login anonymous +app_info_update 1 +app_info_print "${FLUX_STEAM_APP}" +quit 2>/dev/null)"
-    if [ -n "$(flux_public_build "${want}" <<<"${info}")" ]; then
-      beta=(-beta "${want}")
-    else
-      flux_log "WARN Steam has no branch '${want}' for this server (or it could not be read): staying on '${have}'"
+    if [ -z "$(flux_public_build "${want}" <<<"${info}")" ]; then
+      flux_log "WARN Steam has no branch '${want}' for this server (or it needs a password, or Steam could not be read): staying on '${have}'"
       want="${have}"
-      [ "${have}" != "public" ] && beta=(-beta "${have}")
     fi
-  elif [ "${have}" != "public" ]; then
+  fi
+  # A beta is named. The default names nothing, unless the install is on a beta or was last ASKED for
+  # one (an update that never finished: a plain app_update would finish that switch, not undo it).
+  if [ "${want}" != "public" ]; then
+    beta=(-beta "${want}")
+  elif [ "${have}" != "public" ] || [ "${req}" != "public" ]; then
     beta=(-beta public)
   fi
   flux_log "updating the server from Steam (app ${FLUX_STEAM_APP}, branch ${want})"
