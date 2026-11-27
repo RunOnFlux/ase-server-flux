@@ -19,6 +19,8 @@ commands.
                                        and the server started again (applied by the supervisor)
     flux-ase restart                   save, stop and start again
     flux-ase pending                   exit 0 when settings, mods or a restore wait for a restart
+    fluxase.py steam-branch [installed]  the Steam branch the server follows (settings.json "steamBranch",
+                                       default public), or the one the install is on (appmanifest BetaKey)
 
 THE RCON IS NOT PUBLISHED: Source RCON on 127.0.0.1, reached by the hub's exec. The admin password
 (also the in-game `enablecheats` password) is the RCON password.
@@ -1087,6 +1089,53 @@ def installed_build():
         return None
 
 
+# The Steam branch the server follows: "public" (the default) or a beta branch such as "preaquatica"
+# (the pre-Aquatica build, for clients that are still on it). Anonymous SteamCMD only reaches a branch
+# that has no password. It lives in settings.json so that changing it needs no spec update; the
+# supervisor reads it before every SteamCMD run.
+STEAM_BRANCH_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$")
+DEFAULT_BRANCH = "public"
+
+
+def coerce_branch(value):
+    """A branch name as typed: DEFAULT_BRANCH for none/blank/'public', else the name; ValueError when it
+    could not be a Steam branch (it ends up on SteamCMD's command line)."""
+    text = "" if value is None else str(value).strip()
+    if text == "" or text.lower() == DEFAULT_BRANCH:
+        return DEFAULT_BRANCH
+    if not STEAM_BRANCH_RE.match(text):
+        raise ValueError("steamBranch is a branch name: letters, digits, . _ - only (at most 64)")
+    return text
+
+
+def wanted_branch():
+    try:
+        return coerce_branch(load(SETTINGS_FILE).get("steamBranch"))
+    except ValueError:
+        return DEFAULT_BRANCH
+
+
+def installed_branch():
+    """The branch the files on disk are from: the appmanifest's MountedConfig BetaKey. NOT UserConfig,
+    which holds the branch SteamCMD was ASKED for and already says so during (or after a failed) switch
+    (measured 2026-11-27: mid-download UserConfig was public, MountedConfig still preaquatica). A manifest
+    with a MountedConfig and no key there is public; one with no MountedConfig at all falls back to
+    UserConfig; none is public."""
+    try:
+        text = open(os.path.join(SERVER_DIR, "steamapps", "appmanifest_376030.acf"), encoding="utf-8", errors="replace").read()
+    except OSError:
+        return DEFAULT_BRANCH
+    mounted = re.search(r'"MountedConfig"\s*\{([^}]*)\}', text)
+    user = re.search(r'"UserConfig"\s*\{([^}]*)\}', text)
+    block = mounted or user
+    m = re.search(r'"BetaKey"\s+"([^"]*)"', block.group(1)) if block else None
+    return m.group(1) if m and m.group(1) else DEFAULT_BRANCH
+
+
+def cmd_steam_branch(which="wanted"):
+    print(installed_branch() if which == "installed" else wanted_branch())
+
+
 def game_version():
     try:
         return open(os.path.join(SERVER_DIR, "version.txt"), encoding="utf-8", errors="replace").read().strip() or None
@@ -1104,7 +1153,7 @@ def cmd_status():
             pass
     gus = read_ini(GUS)
     out({"state": state.get("state", "stopped"), "message": state.get("message"), "since": state.get("since"),
-         "image": state.get("image"), "build": installed_build(), "version": game_version(),
+         "image": state.get("image"), "build": installed_build(), "branch": installed_branch(), "wantedBranch": wanted_branch(), "version": game_version(),
          "map": state.get("map") or map_name(), "mapName": (f"Workshop map {state.get('modMap')}" if state.get("modMap") else MAPS.get(state.get("map") or map_name(), ("?",))[0]),
          "modMap": state.get("modMap"), "saveFolder": state.get("saveFolder") or save_folder(),
          "name": ini_get(gus, "SessionSettings", "SessionName"), "players": players,
@@ -1146,6 +1195,7 @@ def cmd_settings():
          "adminPassword": admin_password(), "env": {k: v for k, v in ENV.items() if k in os.environ},
          "launch": (load(SETTINGS_FILE).get("launch") if isinstance(load(SETTINGS_FILE).get("launch"), dict) else {}),
          "extraArgs": str(load(SETTINGS_FILE).get("extraArgs", "")),
+         "steamBranch": wanted_branch(), "installedBranch": installed_branch(),
          "launchOptions": {k: v[0] for k, v in LAUNCH.items()}, "ownedFlags": sorted(OWNED_FLAGS),
          "lists": (load(SETTINGS_FILE).get("lists") if isinstance(load(SETTINGS_FILE).get("lists"), dict) else {}),
          "listSchemas": {n: {"ini": ini, "fields": [{"name": f[0], "kind": f[1], "required": f[2], "min": f[3], "max": f[4]} for f in fields]} for n, (ini, fields, _) in LISTS.items()},
@@ -1180,6 +1230,17 @@ def cmd_set_settings(raw):
             continue
         if name == "mapTransfers":
             settings["mapTransfers"] = value is True or str(value).lower() in ("1", "true", "yes", "on")
+            continue
+        if name == "steamBranch":
+            try:
+                branch = coerce_branch(value)
+            except ValueError as e:
+                errors.append(str(e))
+                continue
+            if branch == DEFAULT_BRANCH:
+                settings.pop("steamBranch", None)
+            else:
+                settings["steamBranch"] = branch
             continue
         if name == "launch":
             if not isinstance(value, dict):
@@ -1519,7 +1580,7 @@ def main(argv):
         "saves": (cmd_saves, (0,)), "restart": (cmd_restart, (0,)), "pending": (cmd_pending, (0,)),
         "backups": (cmd_backups, (0,)), "restore": (cmd_restore, (1,)), "restore-apply": (cmd_restore_apply, (0, 1)),
         "backups-prune": (cmd_backups_prune, (1,)), "backup-due": (cmd_backup_due, (1,)),
-        "update-due": (cmd_update_due, (2,)), "update-done": (cmd_update_done, (0,)),
+        "steam-branch": (cmd_steam_branch, (0, 1)), "update-due": (cmd_update_due, (2,)), "update-done": (cmd_update_done, (0,)),
         "mods-outdated": (cmd_mods_outdated, (0,)), "mask": (lambda *w: print(mask(" ".join(w))), tuple(range(0, 40))),
     }
     if not argv or argv[0] not in commands or len(argv) - 1 not in commands[argv[0]][1]:
